@@ -5,22 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Salle de Classe - SchoolAI</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/4.0.2/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@700&family=Inter:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        /* Styles spécifiques pour le contenu de cours */
-        .prose h1 { font-size: 1.8rem; font-weight: 800; color: #1e3a8a; margin-bottom: 1rem; }
-        .prose h2 { font-size: 1.4rem; font-weight: 700; color: #2563eb; margin-top: 1.5rem; margin-bottom: 0.8rem; }
-        .prose p { margin-bottom: 1rem; line-height: 1.6; color: #374151; }
-        .prose ul { list-style-type: disc; padding-left: 1.5rem; margin-bottom: 1rem; }
-        .prose strong { color: #111827; font-weight: 700; }
-        .prose blockquote { border-left: 4px solid #3b82f6; padding-left: 1rem; font-style: italic; background: #eff6ff; padding: 1rem; border-radius: 0 0.5rem 0.5rem 0; }
-        
         .animate-fade-in { animation: fadeIn 0.5s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .animate-fade-in-up { animation: fadeInUp 0.3s ease-out; } 
-        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* Styles des Onglets */
+        .tab-btn { border-bottom: 3px solid transparent; color: #64748b; }
+        .tab-btn.active { border-bottom: 3px solid #2563eb; color: #2563eb; font-weight: bold; }
+        
+        /* Style Math / Formules */
+        .formula-box { font-family: 'Courier New', monospace; background: #1e293b; color: #fbbf24; padding: 1rem; border-radius: 0.5rem; text-align: center; margin: 1rem 0; }
     </style>
 </head>
 <body class="bg-slate-50 font-sans text-slate-800 h-screen flex overflow-hidden">
@@ -44,7 +41,7 @@
 
         <div class="flex-1 overflow-y-auto px-3 py-2 space-y-1" id="lesson-list">
             <div class="text-center py-10 text-gray-400 text-sm animate-pulse">
-                <i class="fas fa-circle-notch fa-spin mb-2 text-2xl"></i><br>Chargement des cours...
+                <i class="fas fa-circle-notch fa-spin mb-2 text-2xl"></i><br>Chargement...
             </div>
         </div>
     </aside>
@@ -73,56 +70,81 @@
                 </div>
                 <h1 class="text-3xl md:text-5xl font-black text-slate-800 mb-6 tracking-tight">Bienvenue en classe !</h1>
                 <p class="text-lg md:text-xl text-slate-500 mb-10 max-w-xl mx-auto leading-relaxed">
-                    Tout le contenu est accessible gratuitement. Sélectionnez une leçon dans le menu à gauche pour commencer.
+                    Sélectionnez une leçon dans le menu à gauche pour commencer à apprendre.
                 </p>
                 <button onclick="document.querySelector('aside').classList.remove('hidden')" class="md:hidden w-full py-4 bg-blue-600 text-white rounded-xl font-bold shadow-lg shadow-blue-200 mb-4 animate-bounce">
                     📂 Ouvrir la liste des cours
                 </button>
             </div>
 
-            <div id="lesson-content" class="hidden max-w-4xl mx-auto pb-32">
-                <div id="loading" class="hidden text-center py-20"><i class="fas fa-circle-notch fa-spin text-4xl text-blue-500"></i></div>
+            <div id="lesson-content" class="hidden max-w-5xl mx-auto pb-32">
                 
-                <div class="mb-8">
+                <div class="mb-6">
                     <div class="flex items-center gap-2 mb-3">
                         <span id="lesson-niveau" class="text-[10px] font-black uppercase tracking-widest bg-slate-800 text-white px-2 py-1 rounded">Niveau</span>
                         <span id="lesson-matiere" class="text-[10px] font-black uppercase tracking-widest bg-blue-100 text-blue-700 px-2 py-1 rounded">Matière</span>
                     </div>
-                    <h1 id="lesson-title" class="text-3xl md:text-5xl font-black text-slate-900 leading-tight">Titre...</h1>
-                    
-                    <div id="audio-player-container" class="hidden mt-6 bg-orange-50 p-4 rounded-xl border border-orange-200 flex items-center gap-4 shadow-sm">
-                        <div class="w-12 h-12 bg-orange-500 rounded-full flex items-center justify-center text-white shrink-0 text-xl shadow"><i class="fas fa-headphones-alt"></i></div>
+                    <h1 id="lesson-title" class="text-2xl md:text-4xl font-black text-slate-900 leading-tight mb-2">Titre du cours</h1>
+                    <p id="lesson-subtitle" class="text-slate-500 italic"></p>
+                </div>
+
+                <div class="flex border-b border-gray-200 mb-6 overflow-x-auto">
+                    <button onclick="switchTab('lecon')" class="tab-btn active flex-1 py-4 px-6 text-sm uppercase tracking-wider transition whitespace-nowrap" id="btn-lecon">📖 Leçon</button>
+                    <button onclick="switchTab('revisions')" class="tab-btn flex-1 py-4 px-6 text-sm uppercase tracking-wider transition whitespace-nowrap" id="btn-revisions">🧠 À Retenir</button>
+                    <button onclick="switchTab('exercices')" class="tab-btn flex-1 py-4 px-6 text-sm uppercase tracking-wider transition whitespace-nowrap" id="btn-exercices">📝 Exercices</button>
+                    <button onclick="switchTab('quiz')" class="tab-btn flex-1 py-4 px-6 text-sm uppercase tracking-wider transition whitespace-nowrap" id="btn-quiz">❓ Quiz</button>
+                </div>
+
+                <div id="tab-lecon" class="tab-content animate-fade-in">
+                    <div id="audio-player-container" class="hidden mb-6 bg-orange-50 p-4 rounded-xl border border-orange-200 flex items-center gap-4 shadow-sm">
+                        <div class="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center text-white shrink-0 shadow"><i class="fas fa-headphones-alt"></i></div>
                         <div class="flex-1">
                             <p class="text-xs font-bold text-orange-800 uppercase mb-1">Version Audio</p>
                             <audio id="audio-player" controls class="w-full h-8 accent-orange-500"></audio>
                         </div>
                     </div>
+                    <div id="lecon-body" class="prose max-w-none bg-white p-6 md:p-10 rounded-3xl shadow-sm border border-gray-100 text-slate-700 leading-relaxed"></div>
                 </div>
 
-                <div id="lesson-body" class="prose max-w-none bg-white p-6 md:p-10 rounded-3xl shadow-sm border border-gray-100"></div>
+                <div id="tab-revisions" class="tab-content hidden animate-fade-in">
+                    <div class="bg-yellow-50 p-8 rounded-3xl border border-yellow-100 shadow-sm">
+                        <h3 class="text-xl font-black text-yellow-800 mb-4"><i class="fas fa-lightbulb mr-2"></i>Idées Essentielles</h3>
+                        <ul id="revisions-list" class="space-y-3 mb-8 list-disc pl-5 text-slate-700 font-medium"></ul>
+                        
+                        <h3 class="text-xl font-black text-yellow-800 mb-4"><i class="fas fa-spell-check mr-2"></i>Vocabulaire & Mots-clés</h3>
+                        <div id="vocab-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+                    </div>
+                </div>
 
-                <div id="quiz-section" class="mt-12 hidden">
-                    <div class="bg-indigo-900 text-white p-6 md:p-8 rounded-3xl shadow-xl relative overflow-hidden">
-                        <div class="absolute top-0 right-0 p-8 opacity-10 text-9xl"><i class="fas fa-question-circle"></i></div>
-                        <h2 class="text-2xl font-bold mb-6 flex items-center gap-3 relative z-10"><i class="fas fa-check-circle text-green-400"></i> Quiz de validation</h2>
-                        <div id="quiz-container" class="space-y-4 relative z-10 text-slate-800"></div>
-                        <button onclick="checkQuiz()" class="mt-8 px-8 py-3 bg-green-500 hover:bg-green-600 text-white font-bold rounded-xl shadow-lg transition w-full md:w-auto relative z-10 transform hover:scale-105">
-                            Vérifier mes réponses
+                <div id="tab-exercices" class="tab-content hidden animate-fade-in">
+                    <div class="flex justify-end mb-4">
+                        <button onclick="generatePDF()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-bold text-sm shadow flex items-center gap-2 transition transform hover:scale-105">
+                            <i class="fas fa-file-pdf"></i> Imprimer la fiche
                         </button>
+                    </div>
+                    <div id="exercices-list" class="space-y-6"></div>
+                </div>
+
+                <div id="tab-quiz" class="tab-content hidden animate-fade-in">
+                    <div class="bg-indigo-900 text-white p-8 rounded-3xl shadow-xl relative overflow-hidden">
+                        <div class="absolute top-0 right-0 p-8 opacity-10 text-9xl"><i class="fas fa-question-circle"></i></div>
+                        <h2 class="text-2xl font-bold mb-6 relative z-10">Testez vos connaissances</h2>
+                        <div id="quiz-container" class="space-y-6 relative z-10 text-slate-800"></div>
                         <div id="quiz-result" class="mt-6 font-bold text-center text-xl hidden bg-white/20 p-4 rounded-xl backdrop-blur relative z-10"></div>
                     </div>
                 </div>
+
             </div>
         </div>
 
         <div class="fixed bottom-6 right-6 z-40 flex flex-col items-end">
-            <div id="chat-window" class="hidden bg-white w-80 md:w-96 h-[500px] rounded-2xl shadow-2xl border border-gray-200 flex flex-col mb-4 overflow-hidden animate-fade-in-up">
+            <div id="chat-window" class="hidden bg-white w-80 md:w-96 h-[500px] rounded-2xl shadow-2xl border border-gray-200 flex flex-col mb-4 overflow-hidden animate-fade-in">
                 <div class="bg-blue-600 p-4 text-white flex justify-between items-center shrink-0 shadow-md">
                     <div class="font-bold flex items-center gap-2"><i class="fas fa-robot"></i> Assistant Prof</div>
                     <button onclick="toggleChat()" class="hover:bg-blue-700 p-1 rounded transition"><i class="fas fa-times"></i></button>
                 </div>
                 <div id="chatbox" class="flex-1 overflow-y-auto p-4 bg-slate-50 text-sm space-y-4">
-                    <div class="text-left"><span class="bg-white border border-gray-200 text-slate-700 px-4 py-3 rounded-tr-xl rounded-br-xl rounded-bl-xl shadow-sm inline-block">Bonjour ! Je lis le cours avec toi. Pose-moi une question si tu bloques ! 👋</span></div>
+                    <div class="text-left"><span class="bg-white border border-gray-200 text-slate-700 px-4 py-3 rounded-tr-xl rounded-br-xl rounded-bl-xl shadow-sm inline-block">Salut ! Je suis là pour t'aider. Une question sur le cours ? 👋</span></div>
                 </div>
                 <div class="p-3 bg-white border-t flex gap-2">
                     <input type="text" id="chat-input" placeholder="Je n'ai pas compris..." class="flex-1 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 ring-blue-500 transition" onkeypress="if(event.key==='Enter') sendMessage()">
@@ -140,8 +162,8 @@
         import { GoogleGenerativeAI } from "https://esm.run/@google/generative-ai";
         import { createClient } from "https://esm.run/@supabase/supabase-js";
 
-        // CONFIGURATION (Clés identiques à l'Admin)
-        const API_KEY_GEMINI = "TOKEN_REMPLACEMENT_ICI";
+        // CONFIGURATION
+        const API_KEY_GEMINI = "TOKEN_REMPLACEMENT_ICI"; 
         const SUPABASE_URL = "https://jdxdthxztokjhprwynyf.supabase.co";
         const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpkeGR0aHh6dG9ramhwcnd5bnlmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcxODAyNzgsImV4cCI6MjA4Mjc1NjI3OH0.zal-p0RKJ-PYGvzal1K9-asbUbyQmqG5OtPTWnoHQmI";
 
@@ -149,38 +171,34 @@
         const genAI = new GoogleGenerativeAI(API_KEY_GEMINI);
 
         let allLessons = [];
-        let currentLessonData = null; // Stocke le cours actif pour le contexte de l'IA
+        let currentLessonData = null; // Données JSON parsées
+        window.jsPDF = window.jspdf.jsPDF; // Raccourci pour le PDF
 
         window.onload = async function() {
-            // 1. Charger UNIQUEMENT les cours (pas les livres EPUB)
-            const { data: lessonsData, error } = await supabase
+            // 1. Charger les cours (exclure les livres)
+            const { data, error } = await supabase
                 .from('lessons')
                 .select('*')
-                .neq('type_contenu', 'livre_bibliotheque') // On exclut les livres
+                .neq('type_contenu', 'livre_bibliotheque')
                 .order('id', { ascending: false });
             
-            if(lessonsData) {
-                allLessons = lessonsData;
+            if(data) {
+                allLessons = data;
+                // Gestion du filtre URL (ex: ?filter=Primaire)
                 const urlParams = new URLSearchParams(window.location.search);
-                const filterParam = urlParams.get('filter'); // ex: "Primaire"
-
+                const filterParam = urlParams.get('filter');
                 if (filterParam) {
                     document.getElementById('search-lesson').value = filterParam;
-                    // Filtre large
-                    const filtered = allLessons.filter(l => 
-                        (l.niveau && l.niveau.includes(filterParam)) || 
-                        (l.matiere && l.matiere.includes(filterParam))
-                    );
-                    renderSidebar(filtered);
+                    filterSidebar(filterParam);
                 } else {
                     renderSidebar(allLessons);
                 }
             } else {
-                document.getElementById('lesson-list').innerHTML = '<p class="text-center text-gray-400 text-sm mt-4">Aucun cours disponible.</p>';
+                document.getElementById('lesson-list').innerHTML = '<p class="text-center text-gray-400 mt-4">Aucun cours disponible.</p>';
             }
         };
 
-        // GESTION SIDEBAR
+        // --- GESTION SIDEBAR ---
         window.renderSidebar = function(lessons) {
             const list = document.getElementById('lesson-list');
             list.innerHTML = '';
@@ -204,8 +222,8 @@
             });
         }
 
-        window.filterSidebar = function() {
-            const query = document.getElementById('search-lesson').value.toLowerCase();
+        window.filterSidebar = function(forceQuery) {
+            const query = forceQuery || document.getElementById('search-lesson').value.toLowerCase();
             const filtered = allLessons.filter(l => 
                 (l.titre && l.titre.toLowerCase().includes(query)) || 
                 (l.matiere && l.matiere.toLowerCase().includes(query)) || 
@@ -216,106 +234,246 @@
 
         window.toggleSidebar = function() { document.querySelector('aside').classList.toggle('hidden'); }
 
-        // AFFICHAGE DU COURS
+        // --- MOTEUR D'AFFICHAGE DU COURS (LE CŒUR DU SYSTÈME) ---
         window.fetchAndDisplayLesson = async function(id) {
             // UI Reset
             document.getElementById('welcome-screen').classList.add('hidden');
             document.getElementById('lesson-content').classList.remove('hidden');
-            document.getElementById('loading').classList.remove('hidden');
-            document.getElementById('lesson-body').innerHTML = '';
-            document.getElementById('quiz-section').classList.add('hidden');
-            
-            // Fermer sidebar sur mobile
             if(window.innerWidth < 768) document.querySelector('aside').classList.add('hidden');
-
-            // Récupérer données complètes
-            const { data, error } = await supabase.from('lessons').select('*').eq('id', id).single();
             
-            document.getElementById('loading').classList.add('hidden');
+            // Fetch
+            const { data, error } = await supabase.from('lessons').select('*').eq('id', id).single();
             if (error || !data) return alert("Erreur chargement cours");
 
-            // Sauvegarder pour l'IA
-            currentLessonData = data;
-
-            // Incrémenter vues (RPC call si dispo, sinon ignoré)
+            // Incrément vues
             try { await supabase.rpc('increment_views', { row_id: id }); } catch(e) {}
 
-            // Remplir les champs
+            // Remplissage infos de base
             document.getElementById('lesson-niveau').innerText = data.niveau || 'Niveau';
             document.getElementById('lesson-matiere').innerText = data.matiere || 'Matière';
             document.getElementById('lesson-title').innerText = data.titre;
-            
-            // Gestion Contenu HTML
-            if (data.contenu_html) {
-                 // Si c'est un objet JSON (ancien format), on extrait, sinon c'est du string HTML
-                let content = typeof data.contenu_html === 'object' ? JSON.stringify(data.contenu_html) : data.contenu_html;
-                document.getElementById('lesson-body').innerHTML = content;
-            } else {
-                document.getElementById('lesson-body').innerHTML = "<p>Contenu en cours de rédaction...</p>";
-            }
 
-            // Gestion Audio
-            const audioDiv = document.getElementById('audio-player-container');
+            // Audio ?
             if(data.audio_url) {
-                audioDiv.classList.remove('hidden');
+                document.getElementById('audio-player-container').classList.remove('hidden');
                 document.getElementById('audio-player').src = data.audio_url;
             } else {
-                audioDiv.classList.add('hidden');
+                document.getElementById('audio-player-container').classList.add('hidden');
             }
 
-            // Gestion Quiz
-            if(data.quiz && Array.isArray(data.quiz) && data.quiz.length > 0) {
-                renderQuiz(data.quiz);
+            // PARSING JSON (Le moment critique)
+            // On vérifie si c'est du JSON structuré ou du vieux HTML
+            try {
+                // On essaie de parser la colonne contenu_html comme du JSON
+                const jsonContent = JSON.parse(data.contenu_html);
+                currentLessonData = jsonContent; // On stocke pour le PDF et l'IA
+                
+                // Si ça marche, on utilise le RENDERER JSON
+                renderLessonFromJSON(jsonContent);
+
+            } catch (e) {
+                // Si ça plante, c'est que c'est du vieux HTML/Texte simple
+                console.log("Contenu non JSON, affichage simple.");
+                currentLessonData = { simple_text: data.contenu_html }; // Fallback pour IA
+                renderLessonSimple(data.contenu_html);
             }
+
+            // Reset Tabs à 'lecon'
+            switchTab('lecon');
         }
 
-        function renderQuiz(quizData) {
-            const container = document.getElementById('quiz-container');
-            container.innerHTML = '';
-            document.getElementById('quiz-section').classList.remove('hidden');
-            document.getElementById('quiz-result').classList.add('hidden');
+        // Cas 1 : Affichage via JSON (Onglets actifs)
+        function renderLessonFromJSON(json) {
+            // A. LEÇON
+            const c = json.contenu || {};
+            document.getElementById('lesson-subtitle').innerText = c.sous_titre || '';
+            let htmlLecon = `
+                <h3 class="font-bold text-xl text-blue-800 mb-2">Définition</h3>
+                <div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r mb-6">${c.definition || 'Pas de définition.'}</div>
+                <div class="mb-6">${marked.parse(c.explication || '')}</div>
+            `;
+            if(c.formules && c.formules.length > 0) {
+                htmlLecon += `<h3 class="font-bold text-xl text-blue-800 mb-2">Formules</h3>`;
+                c.formules.forEach(f => {
+                    htmlLecon += `<div class="formula-box"><div class="text-xs text-gray-500 mb-1">${f.label}</div>${f.code}</div>`;
+                });
+            }
+            if(c.etapes && c.etapes.length > 0) {
+                htmlLecon += `<h3 class="font-bold text-xl text-blue-800 mb-2">Méthode</h3><ol class="list-decimal pl-5 space-y-2">`;
+                c.etapes.forEach(e => htmlLecon += `<li>${e}</li>`);
+                htmlLecon += `</ol>`;
+            }
+            document.getElementById('lecon-body').innerHTML = htmlLecon;
+
+            // B. RÉVISIONS (À Retenir)
+            const r = json.revisions || {};
+            const listRev = document.getElementById('revisions-list');
+            listRev.innerHTML = (r.idees_essentielles || []).map(i => `<li>${i}</li>`).join('');
             
-            quizData.forEach((q, index) => {
-                let optionsHtml = q.options.map((opt, i) => `
-                    <label class="flex items-center gap-3 p-4 bg-white rounded-xl cursor-pointer hover:bg-indigo-50 transition border border-gray-100">
-                        <input type="radio" name="q${index}" value="${i}" class="w-5 h-5 text-indigo-600 accent-indigo-600">
-                        <span class="font-medium">${opt}</span>
-                    </label>
-                `).join('');
-                
-                container.innerHTML += `
-                    <div class="bg-gray-50 p-6 rounded-2xl question-block border border-gray-100" data-correct="${q.correct}">
-                        <p class="font-bold text-lg mb-4 text-slate-800"><span class="text-indigo-500 mr-2">Q${index + 1}.</span>${q.question}</p>
-                        <div class="space-y-2 flex flex-col">${optionsHtml}</div>
+            const gridVocab = document.getElementById('vocab-grid');
+            gridVocab.innerHTML = (r.mots_cles || []).map(m => `
+                <div class="bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
+                    <span class="font-bold text-blue-600 block">${m.terme}</span>
+                    <span class="text-sm text-gray-600">${m.definition}</span>
+                </div>
+            `).join('');
+
+            // C. EXERCICES
+            const exList = document.getElementById('exercices-list');
+            exList.innerHTML = '';
+            const exos = c.exercices || [];
+            exos.forEach((ex, idx) => {
+                exList.innerHTML += `
+                    <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
+                        <div class="flex justify-between items-start mb-2">
+                            <span class="bg-slate-100 text-slate-600 text-xs font-bold px-2 py-1 rounded uppercase">Exercice ${idx+1}</span>
+                        </div>
+                        <p class="font-bold text-lg mb-2">${ex.enonce}</p>
+                        <p class="text-slate-500 italic mb-4 text-sm">${ex.question}</p>
+                        
+                        <button onclick="document.getElementById('sol-${idx}').classList.toggle('hidden')" class="text-blue-600 text-sm font-bold hover:underline mb-2">
+                            Voir la solution
+                        </button>
+                        <div id="sol-${idx}" class="hidden bg-green-50 p-4 rounded-lg border border-green-100 text-green-800 font-medium text-sm mt-2">
+                            ${ex.solution}
+                        </div>
                     </div>
                 `;
             });
+
+            // D. QUIZ
+            const qContainer = document.getElementById('quiz-container');
+            qContainer.innerHTML = '';
+            document.getElementById('quiz-result').classList.add('hidden');
+            const questions = (json.quiz && json.quiz.questions) ? json.quiz.questions : [];
+            
+            if(questions.length === 0) {
+                qContainer.innerHTML = "<p>Pas de quiz pour ce cours.</p>";
+            } else {
+                questions.forEach((q, qIdx) => {
+                    let choicesHtml = q.choix.map((choix, cIdx) => `
+                        <div onclick="checkQuizAnswer(${qIdx}, ${cIdx}, '${q.reponses[0]}', this)" class="quiz-option cursor-pointer p-4 bg-white rounded-xl border border-indigo-100 hover:bg-indigo-50 transition mb-2">
+                            ${choix}
+                        </div>
+                    `).join('');
+                    
+                    qContainer.innerHTML += `
+                        <div class="mb-8 p-4 bg-white/10 rounded-xl border border-white/10">
+                            <p class="font-bold text-lg mb-4 text-white">Question ${qIdx+1}: ${q.question}</p>
+                            <div class="text-slate-800">${choicesHtml}</div>
+                            <div id="feedback-${qIdx}" class="hidden mt-2 p-3 rounded font-bold text-center"></div>
+                        </div>
+                    `;
+                });
+            }
         }
 
-        window.checkQuiz = function() {
-            let score = 0; 
-            const blocks = document.querySelectorAll('.question-block');
-            blocks.forEach((block, index) => {
-                const correctIndex = parseInt(block.dataset.correct);
-                const selected = block.querySelector(`input[name="q${index}"]:checked`);
-                
-                // Reset styles
-                block.classList.remove('ring-2', 'ring-green-500', 'ring-red-500', 'bg-green-50', 'bg-red-50');
-                
-                if(selected && parseInt(selected.value) === correctIndex) { 
-                    score++; 
-                    block.classList.add('ring-2', 'ring-green-500', 'bg-green-50'); 
-                } else { 
-                    block.classList.add('ring-2', 'ring-red-500', 'bg-red-50'); 
-                }
-            });
-            const resultDiv = document.getElementById('quiz-result'); 
-            resultDiv.classList.remove('hidden'); 
-            resultDiv.innerText = `Ton score : ${score} / ${blocks.length}`;
-            if(score === blocks.length) resultDiv.innerText += " 🎉 Excellent !";
+        // Cas 2 : Affichage Simple (Fallback)
+        function renderLessonSimple(htmlContent) {
+            document.getElementById('lecon-body').innerHTML = htmlContent;
+            document.getElementById('revisions-list').innerHTML = "<li>Voir le contenu de la leçon.</li>";
+            document.getElementById('vocab-grid').innerHTML = "";
+            document.getElementById('exercices-list').innerHTML = "<p>Pas d'exercices interactifs disponibles.</p>";
+            document.getElementById('quiz-container').innerHTML = "<p>Pas de quiz disponible.</p>";
         }
 
-        // --- CHATBOT INTELLIGENT ---
+        // --- INTERACTIVITÉ ---
+        window.switchTab = function(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById('tab-' + tabId).classList.remove('hidden');
+            document.getElementById('btn-' + tabId).classList.add('active');
+        }
+
+        window.checkQuizAnswer = function(qIdx, cIdx, correctAnswerText, element) {
+            // Note: Simplification, on compare le texte du choix cliqué avec la réponse attendue
+            // Ou si le JSON a "reponse_correcte" (index), on adapte. 
+            // Ici je suppose que vous comparez le texte ou l'index.
+            // Adaptons pour votre JSON "Golden Sample" qui a "reponses": ["Triangle rectangle"]
+            
+            const questionData = currentLessonData.quiz.questions[qIdx];
+            const choiceText = questionData.choix[cIdx];
+            const isCorrect = questionData.reponses.includes(choiceText); // Vérifie si le texte est dans les bonnes réponses
+
+            const feedbackEl = document.getElementById(`feedback-${qIdx}`);
+            feedbackEl.classList.remove('hidden');
+
+            // Reset visuel frere
+            element.parentElement.querySelectorAll('.quiz-option').forEach(el => el.classList.add('opacity-50'));
+            element.classList.remove('opacity-50');
+
+            if(isCorrect) {
+                element.style.backgroundColor = '#dcfce7'; // Vert clair
+                element.style.borderColor = '#22c55e';
+                feedbackEl.className = "mt-2 p-3 rounded font-bold text-center bg-green-100 text-green-800";
+                feedbackEl.innerText = questionData.feedback.correct || "Correct !";
+            } else {
+                element.style.backgroundColor = '#fee2e2'; // Rouge clair
+                element.style.borderColor = '#ef4444';
+                feedbackEl.className = "mt-2 p-3 rounded font-bold text-center bg-red-100 text-red-800";
+                feedbackEl.innerText = questionData.feedback.incorrect || "Faux.";
+            }
+        }
+
+        // --- GÉNÉRATEUR PDF (Magie) ---
+        window.generatePDF = function() {
+            if(!currentLessonData || !currentLessonData.contenu) return alert("Données insuffisantes pour le PDF.");
+            
+            const doc = new jsPDF();
+            const c = currentLessonData.contenu;
+            
+            // En-tête
+            doc.setFontSize(20);
+            doc.setTextColor(37, 99, 235); // Bleu
+            doc.text(c.titre || "Fiche d'exercices", 20, 20);
+            
+            doc.setFontSize(12);
+            doc.setTextColor(100);
+            doc.text(`Matière: ${currentLessonData.meta.matiere} | Niveau: ${currentLessonData.meta.niveau}`, 20, 30);
+            
+            doc.setLineWidth(0.5);
+            doc.line(20, 35, 190, 35);
+
+            let y = 50;
+
+            // Exercices
+            if(c.exercices) {
+                c.exercices.forEach((ex, i) => {
+                    if(y > 270) { doc.addPage(); y = 20; }
+                    
+                    doc.setFontSize(14);
+                    doc.setTextColor(0);
+                    doc.text(`Exercice ${i+1}`, 20, y);
+                    y += 7;
+                    
+                    doc.setFontSize(12);
+                    doc.setFont("helvetica", "bold");
+                    const splitEnonce = doc.splitTextToSize(ex.enonce, 170);
+                    doc.text(splitEnonce, 20, y);
+                    y += (splitEnonce.length * 5) + 5;
+                    
+                    doc.setFont("helvetica", "italic");
+                    doc.text(`Question: ${ex.question}`, 20, y);
+                    y += 15; // Espace pour répondre sur papier
+                    
+                    // Ligne de séparation pointillée
+                    doc.setDrawColor(200);
+                    doc.setLineDash([2, 2], 0);
+                    doc.line(20, y, 190, y);
+                    doc.setLineDash([]); // Reset
+                    y += 15;
+                });
+            }
+
+            // Footer
+            doc.setFontSize(10);
+            doc.setTextColor(150);
+            doc.text("Généré par SchoolAI Madagascar - Plateforme Éducative Gratuite", 20, 290);
+
+            doc.save(`fiche_${c.titre.replace(/\s+/g, '_')}.pdf`);
+        }
+
+        // --- CHATBOT ---
         window.toggleChat = function() { document.getElementById('chat-window').classList.toggle('hidden'); }
         
         window.sendMessage = async function() {
@@ -324,51 +482,30 @@
             if (!msg) return;
 
             const box = document.getElementById('chatbox'); 
-            // Message User
-            box.innerHTML += `<div class="text-right mb-4 animate-fade-in-up"><span class="bg-blue-600 text-white px-4 py-2 rounded-xl rounded-tr-none inline-block shadow text-sm">${msg}</span></div>`;
-            input.value = ''; 
-            box.scrollTop = box.scrollHeight; 
+            box.innerHTML += `<div class="text-right mb-4 animate-fade-in"><span class="bg-blue-600 text-white px-4 py-2 rounded-xl rounded-tr-none inline-block shadow text-sm">${msg}</span></div>`;
+            input.value = ''; box.scrollTop = box.scrollHeight; 
 
-            // Loading
             const loadId = 'load'+Date.now();
-            box.innerHTML += `<div id="${loadId}" class="text-left mb-4"><span class="text-gray-400 text-xs italic">L'assistant réfléchit...</span></div>`;
+            box.innerHTML += `<div id="${loadId}" class="text-left mb-4"><span class="text-gray-400 text-xs italic">...</span></div>`;
 
             try {
-                // Construction du Contexte (Le "Prompt System")
-                let contextPrompt = `Tu es un tuteur pédagogique bienveillant pour des élèves de Madagascar.`;
-                
-                if(currentLessonData) {
-                    // On nettoie le HTML pour économiser des tokens et ne garder que le texte
-                    const textContent = currentLessonData.contenu_html ? currentLessonData.contenu_html.replace(/<[^>]*>?/gm, '') : "Pas de contenu texte.";
-                    
-                    contextPrompt += `
-                    L'élève est en train de lire le cours : "${currentLessonData.titre}" (Matière: ${currentLessonData.matiere}, Niveau: ${currentLessonData.niveau}).
-                    Voici le contenu du cours qu'il regarde :
-                    """
-                    ${textContent.substring(0, 2000)}... (extrait)
-                    """
-                    Réponds à sa question en utilisant UNIQUEMENT les informations de ce cours si possible. Si la réponse n'y est pas, utilise tes connaissances générales mais précise que ce n'est pas dans le cours. Sois encourageant.
-                    `;
-                } else {
-                    contextPrompt += `L'élève est sur la page d'accueil et n'a pas encore ouvert de leçon. Guide-le pour choisir un cours.`;
+                // Contexte intelligent basé sur le JSON
+                let context = `Tu es un prof. L'élève étudie: ${document.getElementById('lesson-title').innerText}. `;
+                if(currentLessonData && currentLessonData.contenu) {
+                    context += `Définition du cours: ${currentLessonData.contenu.definition}. `;
                 }
-
+                
                 const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-                const result = await model.generateContent([contextPrompt, msg]);
+                const result = await model.generateContent([context + " Question de l'élève: " + msg]);
                 const response = result.response.text();
 
                 document.getElementById(loadId).remove();
-                
-                // Message Bot
-                box.innerHTML += `<div class="text-left mb-4 animate-fade-in-up"><span class="bg-white border border-gray-200 text-slate-700 px-4 py-2 rounded-xl rounded-tl-none inline-block shadow-sm text-sm leading-relaxed">${response}</span></div>`;
+                box.innerHTML += `<div class="text-left mb-4 animate-fade-in"><span class="bg-white border border-gray-200 text-slate-700 px-4 py-2 rounded-xl rounded-tl-none inline-block shadow-sm text-sm leading-relaxed">${marked.parse(response)}</span></div>`;
                 box.scrollTop = box.scrollHeight;
-
             } catch (e) { 
-                console.error(e);
-                document.getElementById(loadId).innerHTML="<span class='text-red-400 text-xs'>Erreur de connexion IA.</span>"; 
+                document.getElementById(loadId).innerHTML="<span class='text-red-400 text-xs'>Erreur.</span>"; 
             }
         }
     </script>
 </body>
-
 </html>
