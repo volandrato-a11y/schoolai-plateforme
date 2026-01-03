@@ -10,6 +10,8 @@
         .hero-bg { background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); }
         .card-hover:hover { transform: translateY(-8px); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); }
         .blob { position: absolute; filter: blur(40px); z-index: 0; opacity: 0.4; }
+        .animate-fade-in-up { animation: fadeInUp 0.8s ease-out; }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body class="bg-white font-sans text-slate-800">
@@ -30,7 +32,24 @@
             </div>
 
             <div class="flex gap-4 items-center">
-                <a href="login.html" class="text-gray-300 hover:text-red-500 transition px-2" title="Accès Professeur (Admin)"><i class="fas fa-lock"></i></a>
+                
+                <div id="guest-menu" class="flex items-center gap-3">
+                    <a href="login.html" class="text-gray-500 hover:text-blue-600 font-bold text-sm transition hidden sm:block">
+                        Se connecter
+                    </a>
+                    <a href="inscription.html" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-full font-bold text-sm transition shadow-lg shadow-blue-200 flex items-center gap-2 transform hover:scale-105">
+                        <i class="fas fa-user-plus"></i> S'inscrire
+                    </a>
+                </div>
+
+                <div id="user-menu" class="hidden flex items-center gap-3">
+                    <span id="user-prenom" class="text-sm font-bold text-blue-900 hidden sm:inline">Bonjour</span>
+                    <button onclick="logout()" class="bg-red-50 text-red-500 border border-red-100 px-4 py-2 rounded-full font-bold text-sm hover:bg-red-100 transition" title="Se déconnecter">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </button>
+                    <a href="admin.html" class="text-gray-300 hover:text-blue-600 transition ml-2" title="Admin"><i class="fas fa-cog"></i></a>
+                </div>
+
             </div>
         </div>
     </nav>
@@ -51,6 +70,11 @@
                 <p class="text-xl text-slate-600 max-w-2xl mx-auto">
                     Des contenus adaptés pour chaque âge. Sélectionnez votre classe pour commencer à apprendre immédiatement.
                 </p>
+                <div class="mt-8 md:hidden">
+                    <a href="inscription.html" class="inline-block w-full bg-blue-600 text-white font-bold py-3 rounded-xl shadow-lg">
+                        Créer un compte gratuit
+                    </a>
+                </div>
             </div>
             
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
@@ -109,9 +133,43 @@
         </div>
     </footer>
     
-    <style>
-        .animate-fade-in-up { animation: fadeInUp 0.8s ease-out; }
-        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-    </style>
+    <script type="module">
+        import { createClient } from "https://esm.run/@supabase/supabase-js";
+
+        const SUPABASE_URL = "https://jdxdthxztokjhprwynyf.supabase.co";
+        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpkeGR0aHh6dG9ramhwcnd5bnlmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcxODAyNzgsImV4cCI6MjA4Mjc1NjI3OH0.zal-p0RKJ-PYGvzal1K9-asbUbyQmqG5OtPTWnoHQmI";
+
+        const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        async function checkAuth() {
+            const { data: { session } } = await supabase.auth.getSession();
+            
+            const guestMenu = document.getElementById('guest-menu');
+            const userMenu = document.getElementById('user-menu');
+
+            if (session) {
+                // Utilisateur connecté
+                guestMenu.classList.add('hidden');
+                userMenu.classList.remove('hidden');
+                
+                // Essayer de récupérer le prénom dans les métadonnées
+                if(session.user.user_metadata && session.user.user_metadata.prenom) {
+                    document.getElementById('user-prenom').innerText = "Bonjour " + session.user.user_metadata.prenom;
+                }
+            } else {
+                // Utilisateur non connecté
+                guestMenu.classList.remove('hidden');
+                userMenu.classList.add('hidden');
+            }
+        }
+
+        window.logout = async function() {
+            await supabase.auth.signOut();
+            window.location.reload();
+        }
+
+        // Lancer la vérification au chargement
+        checkAuth();
+    </script>
 </body>
 </html>
