@@ -233,7 +233,7 @@
             document.getElementById('check-paid').checked = false;
         }
 
-        window.submitPayment = async function() {
+window.submitPayment = async function() {
             const nom = document.getElementById('pay-nom').value;
             const tel = document.getElementById('pay-tel').value;
             const ref = document.getElementById('pay-ref').value;
@@ -244,11 +244,11 @@
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Envoi...';
             btn.disabled = true;
 
+            // CORRECTION ICI : On retire 'amount' et on garde 'montant'
             const { error } = await supabase.from('achats').insert([{
                 user_id: userData.id,
                 document_id: bookData.id,
-                amount: selectedAmount, // Note: Assurez-vous d'avoir ajouté cette colonne ou utilisez 'montant'
-                montant: selectedAmount, // J'utilise 'montant' comme dans votre SQL
+                montant: selectedAmount, // C'est le bon nom de colonne
                 nom_payeur: nom,
                 tel_payeur: tel,
                 ref_transaction: ref,
@@ -256,15 +256,16 @@
             }]);
 
             if(error) {
-                alert("Erreur: " + error.message);
+                console.error(error); // Pour voir l'erreur précise dans la console (F12)
+                alert("Erreur technique : " + error.message);
                 btn.disabled = false;
                 btn.innerHTML = 'Réessayer';
             } else {
+                // Si l'insertion réussit, on lance l'attente automatique
                 showWaitingScreen();
-                startPolling();
+                startPolling(); 
             }
         }
-
         function showPaywall() {
             document.getElementById('loading-screen').classList.add('hidden');
             document.getElementById('paywall').classList.remove('hidden');
@@ -347,3 +348,4 @@
     </script>
 </body>
 </html>
+
