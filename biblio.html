@@ -9,7 +9,9 @@
     <style>
         .animate-fade-in { animation: fadeIn 0.5s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .book-spine { background: linear-gradient(90deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 20%, rgba(0,0,0,0.1) 100%); }
+        /* Nouveau style couverture */
+        .cover-img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s; }
+        .book-spine { background: linear-gradient(90deg, #f3f4f6 0%, #fff 20%, #e5e7eb 100%); }
     </style>
 </head>
 <body class="bg-slate-50 min-h-screen font-sans text-slate-800">
@@ -20,50 +22,43 @@
                 <i class="fas fa-graduation-cap text-blue-600 text-2xl"></i>
                 <span class="font-black text-xl tracking-tighter text-blue-900">School<span class="text-blue-600">AI</span></span>
             </a>
-            <div class="flex items-center gap-6 font-bold text-sm text-gray-500">
-                <a href="eleve.html" class="hover:text-blue-600 transition">Cours</a>
-                <a href="biblio.html" class="text-blue-600 transition">Bibliothèque</a>
-            </div>
+            <a href="eleve.html" class="bg-blue-50 text-blue-700 px-4 py-2 rounded-lg font-bold text-sm hover:bg-blue-100 transition"><i class="fas fa-chalkboard-teacher mr-2"></i>Cours</a>
         </div>
     </nav>
 
-    <header class="bg-gradient-to-r from-purple-900 to-indigo-800 text-white py-16 px-4">
-        <div class="max-w-4xl mx-auto text-center">
-            <h1 class="text-4xl font-black mb-4"><i class="fas fa-book-reader mr-3"></i>La Librairie</h1>
-            <p class="text-purple-200 text-lg mb-8">Des livres exclusifs à petit prix (500 Ar).</p>
+    <div class="max-w-7xl mx-auto px-4 py-8">
+        
+        <div class="text-center mb-12 animate-fade-in">
+            <span class="text-purple-600 font-bold text-sm uppercase tracking-wide">E-Books & Documents</span>
+            <h1 class="text-3xl md:text-4xl font-black text-slate-900 mt-2 mb-6">La Bibliothèque</h1>
             
-            <div class="bg-white p-2 rounded-xl shadow-lg flex flex-col md:flex-row gap-2 max-w-2xl mx-auto">
-                <div class="flex-1 relative">
-                    <i class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                    <input type="text" id="search-input" placeholder="Titre, auteur..." 
-                           class="w-full pl-10 pr-4 py-3 rounded-lg border-none outline-none text-slate-800 placeholder-gray-400 bg-gray-50 focus:bg-white transition"
-                           onkeyup="filterBooks()">
+            <div class="flex flex-col md:flex-row gap-4 max-w-2xl mx-auto">
+                <div class="relative flex-1">
+                    <i class="fas fa-search absolute left-4 top-4 text-gray-400"></i>
+                    <input type="text" id="search-input" placeholder="Titre, auteur..." class="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:ring-2 ring-purple-500 outline-none shadow-sm" onkeyup="filterBooks()">
                 </div>
-                <select id="genre-filter" onchange="filterBooks()" class="p-3 rounded-lg border-none outline-none text-slate-800 bg-gray-50 focus:bg-white font-bold cursor-pointer hover:bg-gray-100 transition">
+                <select id="genre-filter" class="p-3 rounded-xl border border-gray-200 bg-white font-bold text-gray-600" onchange="filterBooks()">
                     <option value="">Tous les genres</option>
+                    <option value="Roman">Roman</option>
+                    <option value="Manuel">Manuel Scolaire</option>
+                    <option value="Cours">Fiche de Cours</option>
+                    <option value="Jeunesse">Jeunesse</option>
+                    <option value="BD">BD / Manga</option>
                 </select>
             </div>
         </div>
-    </header>
 
-    <main class="max-w-7xl mx-auto px-4 py-12">
-        <div id="loading" class="text-center py-20">
-            <i class="fas fa-circle-notch fa-spin text-4xl text-purple-500"></i>
-            <p class="mt-4 text-gray-500">Chargement des rayons...</p>
-        </div>
-
-        <div id="books-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 hidden">
+        <div id="books-grid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
+            <div class="col-span-full text-center py-20 text-gray-400">
+                <i class="fas fa-circle-notch fa-spin text-3xl mb-4"></i><br>Chargement des rayons...
             </div>
-
-        <div id="no-results" class="hidden text-center py-20">
-            <h3 class="text-xl font-bold text-gray-600">Aucun livre trouvé</h3>
         </div>
-    </main>
+
+    </div>
 
     <script type="module">
         import { createClient } from "https://esm.run/@supabase/supabase-js";
 
-        // CONFIGURATION
         const SUPABASE_URL = "https://jdxdthxztokjhprwynyf.supabase.co";
         const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpkeGR0aHh6dG9ramhwcnd5bnlmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcxODAyNzgsImV4cCI6MjA4Mjc1NjI3OH0.zal-p0RKJ-PYGvzal1K9-asbUbyQmqG5OtPTWnoHQmI";
         const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -71,59 +66,54 @@
         let allBooks = [];
 
         window.onload = async function() {
-            // Récupérer SEULEMENT les livres de la bibliothèque
+            // Filtre de sécurité : Publié uniquement
             const { data, error } = await supabase
                 .from('lessons')
                 .select('*')
-                .eq('type_contenu', 'livre_bibliotheque') 
+                .eq('type_contenu', 'livre_bibliotheque')
+                .eq('est_publie', true) // <-- Sécurité
                 .order('id', { ascending: false });
 
             if (data) {
                 allBooks = data;
-                populateGenres();
                 renderBooks(allBooks);
-                document.getElementById('loading').classList.add('hidden');
-                document.getElementById('books-grid').classList.remove('hidden');
+            } else {
+                document.getElementById('books-grid').innerHTML = '<div class="col-span-full text-center text-gray-500">Aucun livre disponible.</div>';
             }
         };
-
-        window.populateGenres = function() {
-            const genres = [...new Set(allBooks.map(b => b.genre).filter(g => g))].sort();
-            const select = document.getElementById('genre-filter');
-            genres.forEach(g => select.innerHTML += `<option value="${g}">${g}</option>`);
-        }
 
         window.renderBooks = function(books) {
             const grid = document.getElementById('books-grid');
             grid.innerHTML = '';
             
-            if(books.length === 0) { document.getElementById('no-results').classList.remove('hidden'); return; }
-            document.getElementById('no-results').classList.add('hidden');
+            if(books.length === 0) { grid.innerHTML = '<div class="col-span-full text-center text-gray-400">Aucun résultat.</div>'; return; }
 
             books.forEach(book => {
-                // Génération de couleur aléatoire pour la couverture si pas d'image
-                const colors = ['from-blue-400 to-blue-600', 'from-purple-400 to-purple-600', 'from-green-400 to-green-600', 'from-pink-400 to-pink-600', 'from-orange-400 to-orange-600'];
-                const randomColor = colors[Math.floor(Math.random() * colors.length)];
-                
-                // Si une vraie couverture a été uploadée, on l'utilise, sinon dégradé
-                // NOTE: Dans la version finale Admin, nous n'avons pas codé l'upload d'image de couverture séparée pour simplifier
-                // On utilise le dégradé par défaut.
-                
-                grid.innerHTML += `
-                    <div class="group cursor-pointer animate-fade-in" onclick="window.location.href='lecture.html?id=${book.id}'">
-                        <div class="aspect-[2/3] rounded-r-lg rounded-l-sm shadow-md group-hover:shadow-xl group-hover:-translate-y-2 transition duration-300 relative overflow-hidden bg-gradient-to-br ${randomColor}">
-                            <div class="book-spine absolute left-0 top-0 bottom-0 w-2 bg-white opacity-20"></div>
-                            <div class="absolute inset-0 flex flex-col justify-between p-4 text-white">
-                                <div class="text-xs font-bold opacity-75 uppercase tracking-wider">${book.genre || 'Livre'}</div>
-                                <div class="font-serif font-bold text-lg leading-tight line-clamp-3 text-shadow">${book.titre}</div>
-                                <div class="text-xs font-medium opacity-90">${book.auteur || 'Auteur Inconnu'}</div>
-                            </div>
-                            <div class="absolute bottom-2 right-2 bg-yellow-400 text-yellow-900 text-xs font-bold px-2 py-1 rounded shadow">500 Ar</div>
+                // Logique Image vs Icone
+                let coverHtml = '';
+                if (book.image_couverture) {
+                    coverHtml = `<img src="${book.image_couverture}" alt="${book.titre}" class="cover-img">`;
+                } else {
+                    // Fallback générique
+                    coverHtml = `
+                        <div class="absolute inset-0 flex flex-col items-center justify-center p-4 text-center">
+                            <i class="fas fa-book text-4xl text-gray-300 mb-2"></i>
+                            <div class="font-serif font-bold text-sm leading-tight text-gray-600 line-clamp-3">${book.titre}</div>
                         </div>
-                        <div class="mt-3">
-                            <h3 class="font-bold text-sm text-gray-800 line-clamp-1 group-hover:text-purple-600 transition">${book.titre}</h3>
-                            <div class="flex items-center gap-2 text-xs text-gray-400 mt-1">
-                                <span><i class="far fa-eye mr-1"></i>${book.views || 0}</span>
+                    `;
+                }
+
+                grid.innerHTML += `
+                    <div class="group relative">
+                        <a href="lecture.html?id=${book.id}" class="block aspect-[2/3] bg-white rounded-r-lg shadow-lg hover:shadow-2xl hover:-translate-y-2 transition duration-300 overflow-hidden border-l-4 border-gray-200 book-spine relative">
+                            ${coverHtml}
+                            <div class="absolute bottom-2 right-2 bg-yellow-400 text-yellow-900 text-[10px] font-bold px-2 py-1 rounded shadow z-10">500 Ar</div>
+                        </a>
+                        <div class="mt-3 px-1">
+                            <h3 class="font-bold text-sm text-slate-800 line-clamp-1 group-hover:text-purple-600 transition">${book.titre}</h3>
+                            <div class="flex justify-between items-center mt-1">
+                                <span class="text-xs text-gray-500 truncate max-w-[70%]">${book.auteur || 'Inconnu'}</span>
+                                <span class="text-[10px] text-gray-400 flex items-center gap-1"><i class="far fa-eye"></i> ${book.views || 0}</span>
                             </div>
                         </div>
                     </div>
