@@ -127,29 +127,45 @@
         import { createClient } from "https://esm.run/@supabase/supabase-js";
 
         // --- CONFIGURATION ---
-        const ADMIN_EMAIL = "volandrato@gmail.com"; // MÊME EMAIL QUE DANS LOGIN
+        // METTEZ VOTRE CLE GEMINI ICI
+        const API_KEY_GEMINI = "TOKEN_REMPLACEMENT_ICI"; 
+        
+        const SUPABASE_URL = "https://jdxdthxztokjhprwynyf.supabase.co";
+        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpkeGR0aHh6dG9ramhwcnd5bnlmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcxODAyNzgsImV4cCI6MjA4Mjc1NjI3OH0.zal-p0RKJ-PYGvzal1K9-asbUbyQmqG5OtPTWnoHQmI";
 
+        // IMPORTANT : REMPLACEZ PAR VOTRE EMAIL ADMIN (Le même que dans login.html)
+        const ADMIN_EMAIL = "votre-email-admin@gmail.com"; 
+
+        const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+        const genAI = new GoogleGenerativeAI(API_KEY_GEMINI);
+        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+
+        let existingData = [], allLessons = [], allAds = [], isNewMode = false;
+        let detectedType = null;
+
+        // --- INITIALISATION SÉCURISÉE ---
         window.onload = async function() {
-            // 1. Vérification Connexion & Identité
+            // 1. Vérification Connexion
             const { data: { session } } = await supabase.auth.getSession();
             
-            // Si pas connecté -> Dehors
+            // Si pas connecté, retour au login
             if (!session) { 
                 window.location.href = 'login.html'; 
                 return; 
             }
 
-            // Si connecté mais pas Admin -> Dehors vers l'accueil
+            // 2. Vérification Admin (Sécurité)
+            // Si l'email n'est pas celui du chef, on renvoie à l'accueil
             if (session.user.email !== ADMIN_EMAIL) {
-                alert("Accès refusé. Réservé à l'administration.");
+                alert("Accès réservé à l'administrateur.");
                 window.location.href = 'index.html';
                 return;
             }
 
-            // Si on arrive ici, c'est que c'est bien VOUS.
+            // 3. Tout est bon, on affiche la page
             document.getElementById('body-content').classList.remove('hidden');
 
-            // 2. Chargement données
+            // 4. Chargement des données
             const { data } = await supabase.from('lessons').select('niveau, classe, matiere');
             if(data) {
                 existingData = data;
@@ -238,7 +254,7 @@
                     let json = result.response.text().replace(/```json|```/g, '').trim();
                     dbObjects = JSON.parse(json).map(l => ({ niveau, classe, matiere, titre: l.titre, contenu_html: l.html_content, quiz: l.quiz, type_contenu: 'pdf_genere', file_url: fileUrl, audio_url: document.getElementById('audioInput').value }));
                 } else if (detectedType === 'epub') {
-                    dbObjects = [{ niveau, classe, matiere, titre: file.name.replace('.epub', ''), type_contenu: 'livre_bibliotheque', file_url: fileUrl, auteur: document.getElementById('meta-auteur').value, genre: document.getElementById('meta-genre').value, contenu_html: '<p>Livre</p>', is_published: true }];
+                    dbObjects = [{ niveau, classe, matiere, titre: file.name.replace('.epub', ''), type_contenu: 'livre_bibliotheque', file_url: fileUrl, auteur: document.getElementById('meta-auteur').value, genre: document.getElementById('meta-genre').value, contenu_html: '<p>Livre</p>', views: 0 }];
                 } else {
                     dbObjects = [{ niveau, classe, matiere, titre: document.getElementById('rawTitle').value, contenu_html: document.getElementById('rawText').value, type_contenu: 'pdf_genere', audio_url: document.getElementById('audioInput').value }];
                 }
@@ -261,9 +277,8 @@
         function fileToBase64(file) { return new Promise((resolve, reject) => { const reader = new FileReader(); reader.readAsDataURL(file); reader.onload = () => resolve({ inlineData: { data: reader.result.split(',')[1], mimeType: file.type } }); reader.onerror = error => reject(error); }); }
         window.loadClasses = function() { const niv = document.getElementById('select-niveau').value; const select = document.getElementById('select-classe'); const classes = [...new Set(existingData.filter(d => d.niveau === niv).map(d => d.classe))]; select.innerHTML = '<option value="">-- Choisir --</option>'; classes.forEach(c => select.innerHTML += `<option value="${c}">${c}</option>`); }
         window.loadMatieres = function() { const niv = document.getElementById('select-niveau').value; const cls = document.getElementById('select-classe').value; const select = document.getElementById('select-matiere'); const matieres = [...new Set(existingData.filter(d => d.niveau === niv && d.classe === cls).map(d => d.matiere))]; select.innerHTML = '<option value="">-- Choisir --</option>'; matieres.forEach(m => select.innerHTML += `<option value="${m}">${m}</option>`); }
+        window.cancelEditMode = function() { isNewMode = false; document.getElementById('edit-mode-id').value = ''; document.getElementById('rawTitle').value = ''; document.getElementById('rawText').value = ''; document.getElementById('zone-text').classList.add('hidden'); document.getElementById('btn-cancel-edit-mode').classList.add('hidden'); document.getElementById('fileInput').value = ''; document.getElementById('file-name').classList.add('hidden'); document.getElementById('mode-indicator').innerText = "En attente d'un fichier..."; }
         window.toggleNewForm = function() { isNewMode = !isNewMode; document.getElementById('new-form').classList.toggle('hidden', !isNewMode); document.getElementById('select-niveau').disabled = isNewMode; }
     </script>
 </body>
 </html>
-
-
