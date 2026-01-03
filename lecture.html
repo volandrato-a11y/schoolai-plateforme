@@ -7,11 +7,12 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.5/jszip.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/epub.js/0.3.93/epub.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/epubjs/dist/epub.min.js"></script>
     <style>
         #viewer { height: 80vh; overflow: hidden; background: #fff; }
         .arrow-btn { position: fixed; top: 50%; transform: translateY(-50%); z-index: 50; background: rgba(255,255,255,0.8); padding: 1rem; border-radius: 50%; box-shadow: 0 4px 6px rgba(0,0,0,0.1); cursor: pointer; transition: all 0.2s; }
         .arrow-btn:hover { background: white; transform: translateY(-50%) scale(1.1); }
+        .option-card.selected { border-color: #2563eb; background-color: #eff6ff; }
     </style>
 </head>
 <body class="bg-slate-100 h-screen flex flex-col overflow-hidden">
@@ -28,49 +29,105 @@
         </div>
     </nav>
 
-    <div class="flex-1 relative flex items-center justify-center bg-white shadow-2xl mx-auto w-full max-w-4xl my-0 md:my-4 rounded-none md:rounded-xl overflow-hidden relative">
+    <div class="flex-1 relative flex items-center justify-center bg-white shadow-2xl mx-auto w-full max-w-5xl my-0 md:my-4 rounded-none md:rounded-xl overflow-hidden relative">
         
         <div id="loading-screen" class="absolute inset-0 flex flex-col items-center justify-center bg-white z-50">
             <i class="fas fa-circle-notch fa-spin text-4xl text-purple-600 mb-4"></i>
-            <p id="loading-text" class="text-sm text-gray-500">Vérification des droits...</p>
+            <p id="loading-text" class="text-sm text-gray-500 font-bold">Vérification des droits...</p>
         </div>
 
-        <div id="paywall" class="hidden absolute inset-0 z-40 bg-white flex flex-col items-center justify-center p-4 text-center overflow-y-auto">
-            <div class="max-w-2xl w-full grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
-                
-                <div class="bg-gray-50 p-6 rounded-2xl border border-gray-200">
-                    <div class="w-12 h-12 bg-gray-200 text-gray-600 rounded-full flex items-center justify-center mx-auto mb-4 text-xl">
-                        <i class="fas fa-book"></i>
+        <div id="paywall" class="hidden absolute inset-0 z-40 bg-white flex flex-col items-center justify-start p-6 text-center overflow-y-auto">
+            
+            <div id="payment-step-1" class="max-w-xl w-full">
+                <div class="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl animate-bounce">
+                    <i class="fas fa-lock"></i>
+                </div>
+                <h2 class="text-2xl font-black text-slate-800 mb-2">Contenu Verrouillé</h2>
+                <p class="text-gray-500 mb-6">Choisissez une option pour débloquer l'accès.</p>
+
+                <div class="space-y-3 mb-6">
+                    <div onclick="selectOption(500, 'book')" class="option-card cursor-pointer border-2 border-gray-200 rounded-xl p-4 flex justify-between items-center hover:border-blue-300 transition" id="opt-500">
+                        <div class="text-left">
+                            <div class="font-bold text-slate-800">Ce livre uniquement</div>
+                            <div class="text-xs text-gray-500">Accès à vie</div>
+                        </div>
+                        <div class="font-black text-xl text-blue-600">500 Ar</div>
                     </div>
-                    <h2 class="text-lg font-bold text-slate-800 mb-1">Juste ce livre</h2>
-                    <p class="text-gray-500 text-sm mb-4">Accès à vie à ce document.</p>
-                    <div class="text-2xl font-black text-slate-800 mb-4">500 Ar</div>
-                    <button onclick="startPayment('unit')" class="w-full bg-white border border-gray-300 hover:bg-gray-50 text-slate-700 font-bold py-3 rounded-xl transition text-sm">
-                        Acheter ce livre
-                    </button>
+
+                    <div onclick="selectOption(10000, 'sub')" class="option-card cursor-pointer border-2 border-purple-200 bg-purple-50 rounded-xl p-4 flex justify-between items-center hover:border-purple-400 transition" id="opt-10000">
+                        <div class="text-left">
+                            <div class="font-bold text-purple-900">Premium 1 Mois</div>
+                            <div class="text-xs text-purple-600">Tout illimité</div>
+                        </div>
+                        <div class="font-black text-xl text-purple-700">10 000 Ar</div>
+                    </div>
+
+                    <div onclick="selectOption(27000, 'sub')" class="option-card cursor-pointer border-2 border-gray-200 rounded-xl p-4 flex justify-between items-center hover:border-blue-300 transition" id="opt-27000">
+                        <div class="text-left">
+                            <div class="font-bold text-slate-800">Premium 3 Mois</div>
+                            <div class="text-xs text-gray-500">Économique</div>
+                        </div>
+                        <div class="font-black text-xl text-slate-700">27 000 Ar</div>
+                    </div>
+
+                    <div onclick="selectOption(50000, 'sub')" class="option-card cursor-pointer border-2 border-gray-200 rounded-xl p-4 flex justify-between items-center hover:border-blue-300 transition" id="opt-50000">
+                        <div class="text-left">
+                            <div class="font-bold text-slate-800">Premium 6 Mois</div>
+                            <div class="text-xs text-gray-500">Best Seller</div>
+                        </div>
+                        <div class="font-black text-xl text-slate-700">50 000 Ar</div>
+                    </div>
                 </div>
 
-                <div class="bg-purple-50 p-6 rounded-2xl border-2 border-purple-400 relative shadow-xl transform md:scale-105">
-                    <div class="absolute top-0 right-0 bg-yellow-400 text-yellow-900 text-[10px] font-bold px-2 py-1 rounded-bl-lg uppercase tracking-wide">Recommandé</div>
-                    <div class="w-12 h-12 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center mx-auto mb-4 text-xl">
-                        <i class="fas fa-crown"></i>
+                <div id="instruction-box" class="hidden bg-blue-50 p-6 rounded-xl border border-blue-200 text-left animate-fade-in mb-8">
+                    <h3 class="font-bold text-blue-800 mb-2"><i class="fas fa-info-circle mr-2"></i>Instructions de paiement</h3>
+                    <p class="text-sm text-blue-900 mb-2">Envoyez <span id="display-amount" class="font-black text-lg">...</span> par MVola au :</p>
+                    <div class="bg-white p-3 rounded-lg border border-blue-100 text-center mb-4">
+                        <div class="text-2xl font-mono font-black text-slate-800">034 91 207 26</div>
+                        <div class="text-xs font-bold text-gray-400 uppercase">Ndrato</div>
                     </div>
-                    <h2 class="text-lg font-bold text-purple-900 mb-1">Tout débloquer</h2>
-                    <p class="text-purple-700 text-sm mb-4">Accès illimité à toute la bibliothèque.</p>
-                    <div class="text-2xl font-black text-purple-900 mb-4">10.000 Ar <span class="text-sm font-normal text-purple-600">/mois</span></div>
-                    <button onclick="startPayment('sub')" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 rounded-xl shadow-lg transition text-sm animate-bounce">
-                        Devenir Premium
-                    </button>
+                    
+                    <label class="flex items-center gap-3 cursor-pointer">
+                        <input type="checkbox" id="check-paid" class="w-5 h-5 text-blue-600 rounded focus:ring-blue-500" onchange="toggleForm()">
+                        <span class="font-bold text-sm text-slate-700">J'ai effectué le paiement</span>
+                    </label>
                 </div>
             </div>
 
-            <div class="mt-8 max-w-md w-full">
-                <p class="text-xs text-gray-400 mb-2">Déjà payé ?</p>
-                <button onclick="declarePayment()" id="btn-declare" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-3 rounded-xl border border-slate-200 transition text-sm">
-                    J'ai envoyé l'argent, vérifier mon accès
-                </button>
-                <p id="payment-status" class="mt-4 text-xs font-bold text-orange-500 hidden"></p>
+            <div id="payment-form" class="hidden max-w-md w-full animate-fade-in text-left">
+                <h3 class="font-bold text-lg mb-4 text-center">Détails de la transaction</h3>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Nom du compte Payeur (Mvola)</label>
+                        <input type="text" id="pay-nom" class="w-full p-3 border rounded-lg bg-gray-50 font-bold" placeholder="Ex: RAKOTO Jean">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Numéro Payeur</label>
+                        <input type="tel" id="pay-tel" class="w-full p-3 border rounded-lg bg-gray-50 font-mono" placeholder="034 XX XXX XX">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Référence Transaction</label>
+                        <input type="text" id="pay-ref" class="w-full p-3 border rounded-lg bg-gray-50 font-mono text-blue-600" placeholder="Ex: 123456789">
+                    </div>
+                    <button onclick="submitPayment()" id="btn-submit" class="w-full py-4 bg-green-500 hover:bg-green-600 text-white font-bold rounded-xl shadow-lg transition transform hover:scale-[1.01] flex justify-center items-center gap-2">
+                        <i class="fas fa-paper-plane"></i> Envoyer la preuve
+                    </button>
+                    <button onclick="resetSelection()" class="w-full py-2 text-gray-400 text-sm hover:text-gray-600">Annuler</button>
+                </div>
             </div>
+
+            <div id="waiting-screen" class="hidden max-w-md w-full text-center">
+                <div class="w-20 h-20 bg-yellow-50 text-yellow-500 rounded-full flex items-center justify-center mx-auto mb-6 text-3xl animate-pulse">
+                    <i class="fas fa-hourglass-half"></i>
+                </div>
+                <h3 class="text-xl font-black text-slate-800 mb-2">Paiement envoyé !</h3>
+                <p class="text-gray-500 mb-6">En attente de validation par l'admin...</p>
+                <div class="bg-yellow-50 text-yellow-800 p-4 rounded-xl text-sm font-bold border border-yellow-100 mb-4">
+                    <i class="fas fa-sync fa-spin mr-2"></i> Ne fermez pas, vérification auto...
+                </div>
+                <p class="text-xs text-gray-400">Cela prend généralement quelques minutes.</p>
+            </div>
+
         </div>
 
         <div id="reader-container" class="w-full h-full relative hidden">
@@ -90,130 +147,174 @@
 
         window.book = null;
         window.rendition = null;
-        let currentFontSize = 100;
         let bookData = null;
         let userData = null;
-        let userProfile = null;
+        let selectedAmount = 0;
+        let pollingInterval = null;
 
         window.onload = async function() {
             const urlParams = new URLSearchParams(window.location.search);
             const bookId = urlParams.get('id');
-
             if (!bookId) { window.location.href = 'biblio.html'; return; }
 
-            // 1. Récupérer l'User et son PROFIL (important pour la date d'abo)
+            // 1. Session User
             const { data: { session } } = await supabase.auth.getSession();
-            if(session) {
-                userData = session.user;
-                // On récupère les infos détaillées (statut, date_fin_abonnement)
-                const { data: profile } = await supabase.from('profiles').select('*').eq('id', userData.id).single();
-                userProfile = profile;
-            }
+            if(session) userData = session.user;
+            else { showPaywall(); return; } // Pas connecté = Paywall direct
 
-            // 2. Récupérer le Livre
+            // 2. Info Livre
             const { data, error } = await supabase.from('lessons').select('*').eq('id', bookId).single();
             if (error || !data) return alert("Livre introuvable");
             bookData = data;
-            
             document.getElementById('book-title').innerText = data.titre;
-            
-            // 3. Vérifier accès
-            if(!userData) {
-                showPaywall("Connectez-vous pour lire.");
-            } else {
-                checkRightsAndLoad(bookId);
-            }
+
+            // 3. Vérifier les droits
+            checkRights();
         };
 
-        async function checkRightsAndLoad(bookId) {
-            // A. VÉRIFICATION ABONNEMENT PREMIUM
-            if (userProfile && userProfile.date_fin_abonnement) {
-                const now = new Date();
-                const dateFin = new Date(userProfile.date_fin_abonnement);
-                
-                if (dateFin > now) {
-                    // Abonnement valide !
-                    console.log("Accès Premium validé");
+        async function checkRights() {
+            // A. Check Premium
+            const { data: profile } = await supabase.from('profiles').select('*').eq('id', userData.id).single();
+            if (profile && profile.date_fin_abonnement) {
+                if (new Date(profile.date_fin_abonnement) > new Date()) {
                     openReader(bookData.file_url);
-                    return; // On arrête là, c'est bon
+                    return;
                 }
             }
 
-            // B. VÉRIFICATION ACHAT À L'UNITÉ
-            const { data: achat } = await supabase
-                .from('achats')
-                .select('*')
-                .eq('user_id', userData.id)
-                .eq('document_id', bookId)
-                .eq('statut', 'valide')
-                .maybeSingle();
-
-            document.getElementById('loading-screen').classList.add('hidden');
-
+            // B. Check Achat Unitaire
+            const { data: achat } = await supabase.from('achats').select('*')
+                .eq('user_id', userData.id).eq('document_id', bookData.id).eq('statut', 'valide').maybeSingle();
+            
             if (achat) {
-                // Achat unitaire valide !
-                console.log("Achat unitaire validé");
                 openReader(bookData.file_url);
+                return;
+            }
+
+            // C. Check en Attente (pour relancer le polling si user revient)
+            const { data: pending } = await supabase.from('achats').select('*')
+                .eq('user_id', userData.id).eq('statut', 'en_attente').order('created_at', {ascending: false}).limit(1).maybeSingle();
+            
+            if (pending) {
+                showWaitingScreen();
+                startPolling();
             } else {
-                // C. RIEN DU TOUT -> PAYWALL
-                // On vérifie s'il y a un paiement en attente pour afficher un message
-                const { data: pending } = await supabase.from('achats').select('*').eq('user_id', userData.id).eq('document_id', bookId).eq('statut', 'en_attente').maybeSingle();
-                if(pending) {
-                    showPaywall();
-                    const status = document.getElementById('payment-status');
-                    status.innerText = "⏳ Votre paiement est en cours de validation...";
-                    status.classList.remove('hidden');
-                    document.getElementById('btn-declare').disabled = true;
-                    document.getElementById('btn-declare').innerText = "Validation en cours...";
-                } else {
-                    showPaywall();
-                }
+                showPaywall();
             }
         }
 
-        function showPaywall(msg) {
-            document.getElementById('loading-screen').classList.add('hidden');
-            document.getElementById('paywall').classList.remove('hidden');
-            if(msg) document.getElementById('payment-status').innerText = msg;
+        // --- GESTION DE L'INTERFACE PAIEMENT ---
+        window.selectOption = function(amount, type) {
+            selectedAmount = amount;
+            // Highlight visuel
+            document.querySelectorAll('.option-card').forEach(el => el.classList.remove('selected'));
+            document.getElementById('opt-'+amount).classList.add('selected');
+            
+            // Afficher instructions
+            document.getElementById('display-amount').innerText = amount + " Ar";
+            document.getElementById('instruction-box').classList.remove('hidden');
+            
+            // Scroll down smooth
+            document.getElementById('instruction-box').scrollIntoView({behavior: "smooth"});
         }
 
-        // --- Logique Paiement ---
-        window.startPayment = function(type) {
-            if(!userData) return window.location.href = 'inscription.html';
-            const telAdmin = "261349120726"; // Votre numéro
-            let msg = "";
-            
-            if (type === 'unit') {
-                msg = `Bonjour, je veux acheter le livre : "${bookData.titre}" (500 Ar). Mon email : ${userData.email}`;
-            } else {
-                msg = `Bonjour, je veux m'abonner PREMIUM 1 mois (10.000 Ar). Mon email : ${userData.email}`;
+        window.toggleForm = function() {
+            const checked = document.getElementById('check-paid').checked;
+            const form = document.getElementById('payment-form');
+            if(checked) {
+                document.getElementById('payment-step-1').classList.add('hidden');
+                form.classList.remove('hidden');
             }
-            
-            window.open(`https://wa.me/${telAdmin}?text=${encodeURIComponent(msg)}`, '_blank');
         }
 
-        window.declarePayment = async function() {
-            if(!userData) return window.location.href = 'inscription.html';
-            if(!confirm("Avez-vous bien envoyé l'argent ?")) return;
+        window.resetSelection = function() {
+            document.getElementById('payment-form').classList.add('hidden');
+            document.getElementById('payment-step-1').classList.remove('hidden');
+            document.getElementById('check-paid').checked = false;
+        }
 
-            // On crée une demande d'achat "en_attente" dans la base
-            // Par défaut, on enregistre ça comme un achat unitaire pour l'instant
-            // Pour l'abonnement, vous le gérerez manuellement dans l'admin en changeant le profil
+        window.submitPayment = async function() {
+            const nom = document.getElementById('pay-nom').value;
+            const tel = document.getElementById('pay-tel').value;
+            const ref = document.getElementById('pay-ref').value;
+
+            if(!nom || !ref) return alert("Veuillez remplir le nom et la référence.");
+
+            const btn = document.getElementById('btn-submit');
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Envoi...';
+            btn.disabled = true;
+
             const { error } = await supabase.from('achats').insert([{
                 user_id: userData.id,
                 document_id: bookData.id,
+                amount: selectedAmount, // Note: Assurez-vous d'avoir ajouté cette colonne ou utilisez 'montant'
+                montant: selectedAmount, // J'utilise 'montant' comme dans votre SQL
+                nom_payeur: nom,
+                tel_payeur: tel,
+                ref_transaction: ref,
                 statut: 'en_attente'
             }]);
 
-            if(error) alert("Erreur : " + error.message);
-            else { alert("Demande envoyée ! Attendez la validation."); location.reload(); }
+            if(error) {
+                alert("Erreur: " + error.message);
+                btn.disabled = false;
+                btn.innerHTML = 'Réessayer';
+            } else {
+                showWaitingScreen();
+                startPolling();
+            }
         }
 
+        function showPaywall() {
+            document.getElementById('loading-screen').classList.add('hidden');
+            document.getElementById('paywall').classList.remove('hidden');
+            document.getElementById('waiting-screen').classList.add('hidden');
+        }
+
+        function showWaitingScreen() {
+            document.getElementById('paywall').classList.remove('hidden');
+            document.getElementById('payment-step-1').classList.add('hidden');
+            document.getElementById('payment-form').classList.add('hidden');
+            document.getElementById('waiting-screen').classList.remove('hidden');
+        }
+
+        // --- POLLING AUTOMATIQUE (MAGIE SANS F5) ---
+        function startPolling() {
+            if(pollingInterval) clearInterval(pollingInterval);
+            
+            // Vérifie toutes les 5 secondes
+            pollingInterval = setInterval(async () => {
+                console.log("Polling verification...");
+                
+                // 1. Check Profile (Si abonnement activé)
+                const { data: profile } = await supabase.from('profiles').select('statut, date_fin_abonnement').eq('id', userData.id).single();
+                if(profile && profile.date_fin_abonnement && new Date(profile.date_fin_abonnement) > new Date()) {
+                    stopPollingAndOpen();
+                    return;
+                }
+
+                // 2. Check Achat Spécifique (Si achat unitaire validé)
+                const { data: achat } = await supabase.from('achats').select('statut').eq('user_id', userData.id).eq('document_id', bookData.id).eq('statut', 'valide').maybeSingle();
+                if(achat) {
+                    stopPollingAndOpen();
+                }
+            }, 5000); 
+        }
+
+        function stopPollingAndOpen() {
+            clearInterval(pollingInterval);
+            document.getElementById('paywall').classList.add('hidden');
+            openReader(bookData.file_url);
+        }
+
+        // --- LECTEUR ROBUSTE ---
         async function openReader(url) {
             document.getElementById('loading-text').innerText = "Téléchargement du livre...";
             document.getElementById('loading-screen').classList.remove('hidden');
+            document.getElementById('paywall').classList.add('hidden');
 
             try {
+                // Méthode ArrayBuffer (Plus sûre pour les problèmes CORS/Fichiers)
                 const response = await fetch(url);
                 if (!response.ok) throw new Error("Erreur réseau");
                 const arrayBuffer = await response.arrayBuffer();
@@ -224,17 +325,24 @@
 
                 window.book = ePub(arrayBuffer);
                 window.rendition = window.book.renderTo("viewer", { width: "100%", height: "100%", flow: "paginated" });
+                
                 window.rendition.display();
+
+                // Gestion erreur interne Epub
+                window.book.on('openFailed', function(e) {
+                    console.error(e);
+                    alert("Le fichier EPUB semble corrompu ou illisible. Contactez l'admin.");
+                });
+
             } catch (e) {
                 console.error(e);
                 document.getElementById('loading-screen').classList.add('hidden');
-                alert("Erreur lors de l'ouverture du livre. Vérifiez le fichier.");
+                alert("Erreur technique lors de l'ouverture (fetch error). Vérifiez votre connexion.");
             }
         }
         
         window.changeFontSize = function(val) {
-            currentFontSize += val * 10;
-            if(window.rendition) window.rendition.themes.fontSize(currentFontSize + "%");
+            if(window.rendition) window.rendition.themes.fontSize((100 + val*10) + "%");
         }
     </script>
 </body>
