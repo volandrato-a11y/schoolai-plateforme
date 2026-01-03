@@ -194,39 +194,102 @@
         }
 
         // --- SALES (MVola) ---
+ // --- GESTION DES VENTES AMÉLIORÉE ---
         window.fetchSales = async function() {
             const list = document.getElementById('sales-list');
             list.innerHTML = '<div class="text-center py-4 text-gray-400"><i class="fas fa-spinner fa-spin"></i> Chargement...</div>';
-            const { data: achats, error } = await supabase.from('achats').select('*').eq('statut', 'en_attente').order('created_at', { ascending: false });
+            
+            const { data: achats, error } = await supabase
+                .from('achats')
+                .select('*')
+                .eq('statut', 'en_attente')
+                .order('created_at', { ascending: false });
+
             if(error) { list.innerHTML = `<div class="text-red-500">Erreur: ${error.message}</div>`; return; }
             if(!achats || achats.length === 0) { list.innerHTML = '<div class="text-center py-10 bg-gray-50 rounded-xl text-gray-500 font-bold">Aucune commande en attente.</div>'; return; }
+            
             list.innerHTML = '';
             for (const achat of achats) {
+                // Récupérer infos user
                 const { data: userProfile } = await supabase.from('profiles').select('*').eq('id', achat.user_id).single();
-                let bookTitle = "Livre inconnu (" + achat.document_id + ")";
-                const { data: book } = await supabase.from('lessons').select('titre').eq('id', achat.document_id).maybeSingle();
-                if(book) bookTitle = book.titre;
-                const nomClient = userProfile ? `${userProfile.prenom} ${userProfile.nom}` : "Client Inconnu";
-                const telClient = userProfile ? userProfile.telephone : "N/A";
+                const nomCompte = userProfile ? `${userProfile.prenom} ${userProfile.nom}` : "Inconnu";
+                
+                // Titre du produit
+                let produit = "Livre inconnu";
+                let badgeColor = "bg-yellow-100 text-yellow-800";
+                
+                if (achat.amount >= 10000) {
+                    produit = `💎 ABONNEMENT (${achat.amount} Ar)`;
+                    badgeColor = "bg-purple-100 text-purple-800";
+                } else {
+                    const { data: book } = await supabase.from('lessons').select('titre').eq('id', achat.document_id).maybeSingle();
+                    if(book) produit = `📘 ${book.titre}`;
+                }
+
                 const dateCmd = new Date(achat.created_at).toLocaleString('fr-FR');
-                list.innerHTML += `<div class="bg-yellow-50 border border-yellow-200 p-6 rounded-xl flex flex-col md:flex-row justify-between items-center gap-4 shadow-sm animate-fade-in"><div class="flex-1"><div class="flex items-center gap-2 mb-2"><span class="bg-yellow-200 text-yellow-800 text-xs font-bold px-2 py-1 rounded-full uppercase tracking-wide">En attente</span><span class="text-gray-400 text-xs">${dateCmd}</span></div><h3 class="font-black text-lg text-slate-800 mb-1">${bookTitle}</h3><p class="text-sm text-gray-600">👤 Client : <span class="font-bold">${nomClient}</span></p><p class="text-sm text-gray-600">📱 Tél : <span class="font-mono font-bold bg-white px-1 rounded border">${telClient}</span></p></div><div class="flex gap-3 w-full md:w-auto"><button onclick="deleteSale('${achat.id}')" class="flex-1 md:flex-none px-4 py-2 text-red-500 font-bold text-sm border border-red-200 rounded-lg hover:bg-red-50 transition">Refuser</button><button onclick="validateSale('${achat.id}')" class="flex-1 md:flex-none px-6 py-3 bg-green-500 text-white font-bold rounded-xl shadow hover:bg-green-600 transition transform hover:scale-105 flex items-center gap-2"><i class="fas fa-check-circle"></i> Valider (500 Ar)</button></div></div>`;
+
+                list.innerHTML += `
+                    <div class="bg-white border border-gray-200 p-6 rounded-xl shadow-sm animate-fade-in mb-4">
+                        <div class="flex flex-col md:flex-row justify-between gap-4">
+                            <div class="flex-1">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <span class="${badgeColor} text-xs font-bold px-2 py-1 rounded-full uppercase tracking-wide">${achat.statut}</span>
+                                    <span class="text-gray-400 text-xs">${dateCmd}</span>
+                                </div>
+                                <h3 class="font-black text-lg text-slate-800 mb-2">${produit}</h3>
+                                
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2 text-sm bg-slate-50 p-3 rounded-lg border border-slate-100">
+                                    <p class="text-gray-500">👤 Compte SchoolAI : <span class="font-bold text-slate-700">${nomCompte}</span></p>
+                                    <p class="text-gray-500">💰 Montant déclaré : <span class="font-bold text-green-600">${achat.montant} Ar</span></p>
+                                    
+                                    <p class="text-gray-500">📞 Tél Payeur : <span class="font-mono font-bold text-slate-700">${achat.tel_payeur || '-'}</span></p>
+                                    <p class="text-gray-500">🧾 Réf Transaction : <span class="font-mono font-bold text-blue-600 bg-blue-50 px-1 rounded">${achat.ref_transaction || '-'}</span></p>
+                                    <p class="text-gray-500 md:col-span-2">📝 Nom Payeur Mvola : <span class="font-bold text-slate-700">${achat.nom_payeur || '-'}</span></p>
+                                </div>
+                            </div>
+                            
+                            <div class="flex flex-col justify-center gap-2 min-w-[150px]">
+                                <button onclick="validateSale('${achat.id}', ${achat.montant}, '${achat.user_id}')" class="w-full py-3 bg-green-500 text-white font-bold rounded-xl shadow hover:bg-green-600 transition flex items-center justify-center gap-2">
+                                    <i class="fas fa-check-circle"></i> Valider
+                                </button>
+                                <button onclick="deleteSale('${achat.id}')" class="w-full py-2 text-red-500 font-bold text-sm border border-red-200 rounded-lg hover:bg-red-50 transition">
+                                    Refuser
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
             }
         };
-        window.validateSale = async function(id) { if(!confirm("Reçu l'argent ?")) return; await supabase.from('achats').update({ statut: 'valide', date_validation: new Date() }).eq('id', id); fetchSales(); };
-        window.deleteSale = async function(id) { if(!confirm("Supprimer ?")) return; await supabase.from('achats').delete().eq('id', id); fetchSales(); };
 
-        // --- CORE FUNCTIONS (Upload & IA) ---
-        window.handleFileSelect = function() {
-            const file = document.getElementById('fileInput').files[0];
-            const indicator = document.getElementById('mode-indicator');
-            const libOptions = document.getElementById('library-options');
-            const btn = document.getElementById('btn-action');
-            const fileNameDisp = document.getElementById('file-name');
-            if (!file) { if(document.getElementById('rawText').value.length > 0) { enableSaveButton(); return; } detectedType = null; indicator.innerHTML = "En attente..."; libOptions.classList.add('hidden'); btn.disabled = true; fileNameDisp.classList.add('hidden'); return; }
-            fileNameDisp.innerText = "📄 " + file.name; fileNameDisp.classList.remove('hidden');
-            if (file.name.toLowerCase().endsWith('.epub')) { detectedType = 'epub'; indicator.innerHTML = `EPUB DÉTECTÉ`; libOptions.classList.remove('hidden'); btn.innerHTML = 'Ajouter Biblio'; btn.disabled = false; btn.className = "w-full bg-purple-600 hover:bg-purple-700 text-white font-bold text-lg py-4 rounded-xl shadow-lg"; } 
-            else { detectedType = 'pdf'; indicator.innerHTML = `PDF DÉTECTÉ`; libOptions.classList.add('hidden'); btn.innerHTML = 'Générer Cours IA'; btn.disabled = false; btn.className = "w-full bg-blue-600 hover:bg-blue-700 text-white font-bold text-lg py-4 rounded-xl shadow-lg"; }
-        }
+        // VALIDATION INTELLIGENTE (Gère l'activation automatique)
+        window.validateSale = async function(achatId, montant, userId) {
+            if(!confirm(`Confirmer la réception de ${montant} Ar ?`)) return;
+
+            // 1. Mise à jour de l'achat
+            await supabase.from('achats').update({ statut: 'valide', date_validation: new Date() }).eq('id', achatId);
+
+            // 2. Si c'est un abonnement, on met à jour le profil utilisateur
+            if (montant >= 10000) {
+                let jours = 30;
+                if(montant >= 27000) jours = 90;
+                if(montant >= 50000) jours = 180;
+
+                const dateFin = new Date();
+                dateFin.setDate(dateFin.getDate() + jours);
+
+                await supabase.from('profiles').update({ 
+                    statut: 'premium',
+                    date_fin_abonnement: dateFin.toISOString()
+                }).eq('id', userId);
+                
+                alert(`✅ Achat validé et Abonnement de ${jours} jours activé !`);
+            } else {
+                alert("✅ Livre débloqué !");
+            }
+
+            fetchSales();
+        };
         function enableSaveButton() { const btn = document.getElementById('btn-action'); btn.disabled = false; btn.className = "w-full bg-green-600 text-white font-bold text-lg py-4 rounded-xl shadow-lg"; btn.innerHTML = 'Enregistrer'; }
         
         window.processData = async function() {
@@ -282,4 +345,5 @@
     </script>
 </body>
 </html>
+
 
