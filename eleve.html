@@ -11,15 +11,9 @@
     <style>
         .animate-fade-in { animation: fadeIn 0.5s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        
-        /* Styles des Onglets */
         .tab-btn { border-bottom: 3px solid transparent; color: #64748b; }
         .tab-btn.active { border-bottom: 3px solid #2563eb; color: #2563eb; font-weight: bold; }
-        
-        /* Style Math / Formules */
         .formula-box { font-family: 'Courier New', monospace; background: #1e293b; color: #fbbf24; padding: 1rem; border-radius: 0.5rem; text-align: center; margin: 1rem 0; }
-
-        /* Styles Arborescence */
         details > summary { list-style: none; cursor: pointer; transition: all 0.2s; }
         details > summary::-webkit-details-marker { display: none; }
         details[open] > summary .arrow { transform: rotate(90deg); }
@@ -36,71 +30,46 @@
             </a>
             <a href="eleve.html" title="Tout afficher" class="text-xs font-bold text-gray-400 hover:text-blue-600"><i class="fas fa-sync"></i></a>
         </div>
-        
         <div class="p-4 bg-gray-50/50">
             <div class="relative">
                 <i class="fas fa-search absolute left-3 top-3 text-gray-400 text-sm"></i>
-                <input type="text" id="search-lesson" placeholder="Rechercher un cours..." 
-                       class="w-full pl-9 pr-4 py-3 bg-white border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 ring-blue-500 transition shadow-sm"
-                       onkeyup="handleSearch()">
+                <input type="text" id="search-lesson" placeholder="Rechercher un cours..." class="w-full pl-9 pr-4 py-3 bg-white border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 ring-blue-500 transition shadow-sm" onkeyup="handleSearch()">
             </div>
             <div id="active-filter-badge" class="hidden mt-2">
-                <span class="bg-blue-100 text-blue-700 text-xs font-bold px-2 py-1 rounded-lg flex items-center justify-between">
-                    <span id="filter-name">Filtre</span>
-                    <button onclick="window.location.href='eleve.html'" class="ml-2 hover:text-blue-900"><i class="fas fa-times"></i></button>
-                </span>
+                <span class="bg-blue-100 text-blue-700 text-xs font-bold px-2 py-1 rounded-lg flex items-center justify-between"><span id="filter-name">Filtre</span><button onclick="window.location.href='eleve.html'" class="ml-2 hover:text-blue-900"><i class="fas fa-times"></i></button></span>
             </div>
         </div>
-
         <div class="flex-1 overflow-y-auto px-2 py-2" id="lesson-sidebar-content">
-            <div class="text-center py-10 text-gray-400 text-sm animate-pulse">
-                <i class="fas fa-circle-notch fa-spin mb-2 text-2xl"></i><br>Chargement...
-            </div>
+            <div class="text-center py-10 text-gray-400 text-sm animate-pulse"><i class="fas fa-circle-notch fa-spin mb-2 text-2xl"></i><br>Chargement...</div>
         </div>
     </aside>
 
     <main class="flex-1 flex flex-col relative w-full overflow-hidden">
-        
         <header class="bg-white/90 backdrop-blur-md border-b border-gray-100 p-4 flex justify-between items-center sticky top-0 z-10 shadow-sm shrink-0">
             <div class="flex items-center gap-3">
                 <button class="md:hidden text-gray-500 text-xl p-2 hover:bg-gray-100 rounded-lg" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
                 <h2 class="font-bold text-slate-700 hidden sm:block">Catalogue des cours</h2>
             </div>
-            
             <div class="flex items-center gap-3">
-                <a href="biblio.html" class="bg-purple-50 text-purple-700 border border-purple-200 px-4 py-2 rounded-lg font-bold text-sm hover:bg-purple-100 transition flex items-center gap-2 shadow-sm">
-                    <i class="fas fa-book-reader"></i> <span class="hidden sm:inline">Bibliothèque</span>
-                </a>
+                <a href="biblio.html" class="bg-purple-50 text-purple-700 border border-purple-200 px-4 py-2 rounded-lg font-bold text-sm hover:bg-purple-100 transition flex items-center gap-2 shadow-sm"><i class="fas fa-book-reader"></i> <span class="hidden sm:inline">Bibliothèque</span></a>
                 <a href="index.html" class="bg-gray-50 text-gray-600 border border-gray-200 px-4 py-2 rounded-lg font-bold text-sm hover:bg-gray-100 transition shadow-sm"><i class="fas fa-home"></i></a>
             </div>
         </header>
 
         <div id="content-area" class="flex-1 overflow-y-auto p-4 md:p-8 scroll-smooth bg-slate-50">
-            
             <div id="welcome-screen" class="max-w-3xl mx-auto text-center py-12 md:py-24 animate-fade-in">
-                <div class="inline-block p-6 rounded-full bg-white shadow-xl mb-8 transform hover:scale-105 transition duration-500">
-                    <span class="text-6xl">🎓</span>
-                </div>
+                <div class="inline-block p-6 rounded-full bg-white shadow-xl mb-8 transform hover:scale-105 transition duration-500"><span class="text-6xl">🎓</span></div>
                 <h1 class="text-3xl md:text-5xl font-black text-slate-800 mb-6 tracking-tight">Bienvenue en classe !</h1>
-                <p class="text-lg md:text-xl text-slate-500 mb-10 max-w-xl mx-auto leading-relaxed">
-                    Utilisez le menu à gauche pour naviguer par <b>Niveau > Classe > Matière</b>.
-                </p>
-                <button onclick="document.querySelector('aside').classList.remove('hidden')" class="md:hidden w-full py-4 bg-blue-600 text-white rounded-xl font-bold shadow-lg shadow-blue-200 mb-4 animate-bounce">
-                    📂 Ouvrir les cours
-                </button>
+                <p class="text-lg md:text-xl text-slate-500 mb-10 max-w-xl mx-auto leading-relaxed">Utilisez le menu à gauche pour naviguer par <b>Niveau > Classe > Matière</b>.</p>
+                <button onclick="document.querySelector('aside').classList.remove('hidden')" class="md:hidden w-full py-4 bg-blue-600 text-white rounded-xl font-bold shadow-lg shadow-blue-200 mb-4 animate-bounce">📂 Ouvrir les cours</button>
             </div>
 
             <div id="lesson-content" class="hidden max-w-5xl mx-auto pb-32">
-                
                 <div class="mb-6">
-                    <div class="flex items-center gap-2 mb-3">
-                        <span id="lesson-niveau" class="text-[10px] font-black uppercase tracking-widest bg-slate-800 text-white px-2 py-1 rounded">Niveau</span>
-                        <span id="lesson-matiere" class="text-[10px] font-black uppercase tracking-widest bg-blue-100 text-blue-700 px-2 py-1 rounded">Matière</span>
-                    </div>
+                    <div class="flex items-center gap-2 mb-3"><span id="lesson-niveau" class="text-[10px] font-black uppercase tracking-widest bg-slate-800 text-white px-2 py-1 rounded">Niveau</span><span id="lesson-matiere" class="text-[10px] font-black uppercase tracking-widest bg-blue-100 text-blue-700 px-2 py-1 rounded">Matière</span></div>
                     <h1 id="lesson-title" class="text-2xl md:text-4xl font-black text-slate-900 leading-tight mb-2">Titre du cours</h1>
                     <p id="lesson-subtitle" class="text-slate-500 italic"></p>
                 </div>
-
                 <div class="flex border-b border-gray-200 mb-6 overflow-x-auto">
                     <button onclick="switchTab('lecon')" class="tab-btn active flex-1 py-4 px-6 text-sm uppercase tracking-wider transition whitespace-nowrap" id="btn-lecon">📖 Leçon</button>
                     <button onclick="switchTab('revisions')" class="tab-btn flex-1 py-4 px-6 text-sm uppercase tracking-wider transition whitespace-nowrap" id="btn-revisions">🧠 À Retenir</button>
@@ -111,69 +80,45 @@
                 <div id="tab-lecon" class="tab-content animate-fade-in">
                     <div id="audio-player-container" class="hidden mb-6 bg-orange-50 p-4 rounded-xl border border-orange-200 flex items-center gap-4 shadow-sm">
                         <div class="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center text-white shrink-0 shadow"><i class="fas fa-headphones-alt"></i></div>
-                        <div class="flex-1">
-                            <p class="text-xs font-bold text-orange-800 uppercase mb-1">Version Audio</p>
-                            <audio id="audio-player" controls class="w-full h-8 accent-orange-500"></audio>
-                        </div>
+                        <div class="flex-1"><p class="text-xs font-bold text-orange-800 uppercase mb-1">Version Audio</p><audio id="audio-player" controls class="w-full h-8 accent-orange-500"></audio></div>
                     </div>
                     <div id="lecon-body" class="prose max-w-none bg-white p-6 md:p-10 rounded-3xl shadow-sm border border-gray-100 text-slate-700 leading-relaxed"></div>
                 </div>
 
                 <div id="tab-revisions" class="tab-content hidden animate-fade-in">
                     <div class="bg-yellow-50 p-8 rounded-3xl border border-yellow-100 shadow-sm">
-                        <h3 class="text-xl font-black text-yellow-800 mb-4"><i class="fas fa-lightbulb mr-2"></i>Idées Essentielles</h3>
-                        <ul id="revisions-list" class="space-y-3 mb-8 list-disc pl-5 text-slate-700 font-medium"></ul>
-                        <h3 class="text-xl font-black text-yellow-800 mb-4"><i class="fas fa-spell-check mr-2"></i>Vocabulaire</h3>
-                        <div id="vocab-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+                        <h3 class="text-xl font-black text-yellow-800 mb-4"><i class="fas fa-lightbulb mr-2"></i>Idées Essentielles</h3><ul id="revisions-list" class="space-y-3 mb-8 list-disc pl-5 text-slate-700 font-medium"></ul>
+                        <h3 class="text-xl font-black text-yellow-800 mb-4"><i class="fas fa-spell-check mr-2"></i>Vocabulaire</h3><div id="vocab-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
                     </div>
                 </div>
 
                 <div id="tab-exercices" class="tab-content hidden animate-fade-in">
-                    <div class="flex justify-end mb-4">
-                        <button onclick="generatePDF()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-bold text-sm shadow flex items-center gap-2 transition transform hover:scale-105">
-                            <i class="fas fa-file-pdf"></i> Imprimer la fiche
-                        </button>
-                    </div>
+                    <div class="flex justify-end mb-4"><button onclick="generatePDF()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-bold text-sm shadow flex items-center gap-2 transition transform hover:scale-105"><i class="fas fa-file-pdf"></i> Imprimer la fiche</button></div>
                     <div id="exercices-list" class="space-y-6"></div>
                 </div>
 
                 <div id="tab-quiz" class="tab-content hidden animate-fade-in">
                     <div class="bg-indigo-900 text-white p-8 rounded-3xl shadow-xl relative overflow-hidden">
-                        <h2 class="text-2xl font-bold mb-6 relative z-10">Testez vos connaissances</h2>
-                        <div id="quiz-container" class="space-y-6 relative z-10 text-slate-800"></div>
-                        <div id="quiz-result" class="mt-6 font-bold text-center text-xl hidden bg-white/20 p-4 rounded-xl backdrop-blur relative z-10"></div>
+                        <h2 class="text-2xl font-bold mb-6 relative z-10">Testez vos connaissances</h2><div id="quiz-container" class="space-y-6 relative z-10 text-slate-800"></div><div id="quiz-result" class="mt-6 font-bold text-center text-xl hidden bg-white/20 p-4 rounded-xl backdrop-blur relative z-10"></div>
                     </div>
                 </div>
-
             </div>
         </div>
         
         <div class="fixed bottom-6 right-6 z-40 flex flex-col items-end">
             <div id="chat-window" class="hidden bg-white w-80 md:w-96 h-[500px] rounded-2xl shadow-2xl border border-gray-200 flex flex-col mb-4 overflow-hidden animate-fade-in">
-                <div class="bg-blue-600 p-4 text-white flex justify-between items-center shrink-0 shadow-md">
-                    <div class="font-bold flex items-center gap-2"><i class="fas fa-robot"></i> Assistant Prof</div>
-                    <button onclick="toggleChat()" class="hover:bg-blue-700 p-1 rounded transition"><i class="fas fa-times"></i></button>
-                </div>
-                <div id="chatbox" class="flex-1 overflow-y-auto p-4 bg-slate-50 text-sm space-y-4">
-                    <div class="text-left"><span class="bg-white border border-gray-200 text-slate-700 px-4 py-3 rounded-tr-xl rounded-br-xl rounded-bl-xl shadow-sm inline-block">Une question sur le cours ? 👋</span></div>
-                </div>
-                <div class="p-3 bg-white border-t flex gap-2">
-                    <input type="text" id="chat-input" placeholder="Je n'ai pas compris..." class="flex-1 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 ring-blue-500 transition" onkeypress="if(event.key==='Enter') sendMessage()">
-                    <button onclick="sendMessage()" class="bg-blue-600 text-white w-10 h-10 rounded-lg hover:bg-blue-700 transition flex items-center justify-center shadow-md"><i class="fas fa-paper-plane"></i></button>
-                </div>
+                <div class="bg-blue-600 p-4 text-white flex justify-between items-center shrink-0 shadow-md"><div class="font-bold flex items-center gap-2"><i class="fas fa-robot"></i> Assistant Prof</div><button onclick="toggleChat()" class="hover:bg-blue-700 p-1 rounded transition"><i class="fas fa-times"></i></button></div>
+                <div id="chatbox" class="flex-1 overflow-y-auto p-4 bg-slate-50 text-sm space-y-4"><div class="text-left"><span class="bg-white border border-gray-200 text-slate-700 px-4 py-3 rounded-tr-xl rounded-br-xl rounded-bl-xl shadow-sm inline-block">Une question sur le cours ? 👋</span></div></div>
+                <div class="p-3 bg-white border-t flex gap-2"><input type="text" id="chat-input" placeholder="Je n'ai pas compris..." class="flex-1 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 ring-blue-500 transition" onkeypress="if(event.key==='Enter') sendMessage()"><button onclick="sendMessage()" class="bg-blue-600 text-white w-10 h-10 rounded-lg hover:bg-blue-700 transition flex items-center justify-center shadow-md"><i class="fas fa-paper-plane"></i></button></div>
             </div>
-            <button onclick="toggleChat()" class="w-16 h-16 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-xl flex items-center justify-center text-2xl transition transform hover:scale-110 border-4 border-white">
-                <i class="fas fa-comment-dots"></i>
-            </button>
+            <button onclick="toggleChat()" class="w-16 h-16 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-xl flex items-center justify-center text-2xl transition transform hover:scale-110 border-4 border-white"><i class="fas fa-comment-dots"></i></button>
         </div>
-
     </main>
 
     <script type="module">
         import { GoogleGenerativeAI } from "https://esm.run/@google/generative-ai";
         import { createClient } from "https://esm.run/@supabase/supabase-js";
 
-        // CONFIG
         const API_KEY_GEMINI = "TOKEN_REMPLACEMENT_ICI"; 
         const SUPABASE_URL = "https://jdxdthxztokjhprwynyf.supabase.co";
         const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpkeGR0aHh6dG9ramhwcnd5bnlmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcxODAyNzgsImV4cCI6MjA4Mjc1NjI3OH0.zal-p0RKJ-PYGvzal1K9-asbUbyQmqG5OtPTWnoHQmI";
@@ -181,302 +126,92 @@
         const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
         const genAI = new GoogleGenerativeAI(API_KEY_GEMINI);
 
-        let allLessons = [];
-        let currentLessonData = null;
-        window.jsPDF = window.jspdf.jsPDF;
+        let allLessons = []; let currentLessonData = null; window.jsPDF = window.jspdf.jsPDF;
 
         window.onload = async function() {
-            // Récupérer tous les cours
-            const { data, error } = await supabase
-                .from('lessons')
-                .select('*')
-                .neq('type_contenu', 'livre_bibliotheque')
-                .order('titre', { ascending: true }); // Tri par titre pour l'instant
+            // FILTRE DE SÉCURITÉ : neq('livre') ET eq('est_publie', true)
+            const { data, error } = await supabase.from('lessons').select('*').neq('type_contenu', 'livre_bibliotheque').eq('est_publie', true).order('titre', { ascending: true });
             
             if(data) {
                 allLessons = data;
                 const urlParams = new URLSearchParams(window.location.search);
-                const filterParam = urlParams.get('filter'); // Ex: 'Primaire'
+                const filterParam = urlParams.get('filter');
 
                 if (filterParam) {
-                    // Si filtre, on filtre les données brutes AVANT de construire l'arbre
                     const filteredData = allLessons.filter(l => l.niveau === filterParam);
-                    
-                    // On affiche le badge de filtre
                     document.getElementById('active-filter-badge').classList.remove('hidden');
                     document.getElementById('filter-name').innerText = filterParam;
-                    
-                    // On construit l'arbre avec seulement ces données
                     buildAndRenderTree(filteredData);
                 } else {
                     buildAndRenderTree(allLessons);
                 }
-            } else {
-                document.getElementById('lesson-sidebar-content').innerHTML = '<p class="text-center text-gray-400 mt-4">Aucun cours.</p>';
-            }
+            } else { document.getElementById('lesson-sidebar-content').innerHTML = '<p class="text-center text-gray-400 mt-4">Aucun cours.</p>'; }
         };
 
-        // --- GESTION DE L'ARBORESCENCE (Tree) ---
         function buildAndRenderTree(lessons) {
-            const container = document.getElementById('lesson-sidebar-content');
-            container.innerHTML = '';
-
-            if (lessons.length === 0) {
-                container.innerHTML = '<p class="text-gray-400 text-sm p-4 text-center">Aucun cours trouvé pour ce niveau.</p>';
-                return;
-            }
-
-            // 1. Regrouper les données (Niveau -> Classe -> Matière -> Leçons)
+            const container = document.getElementById('lesson-sidebar-content'); container.innerHTML = '';
+            if (lessons.length === 0) { container.innerHTML = '<p class="text-gray-400 text-sm p-4 text-center">Aucun cours trouvé.</p>'; return; }
             const tree = {};
-            lessons.forEach(l => {
-                const niv = l.niveau || "Autre";
-                const cls = l.classe || "Général";
-                const mat = l.matiere || "Divers";
-                
-                if (!tree[niv]) tree[niv] = {};
-                if (!tree[niv][cls]) tree[niv][cls] = {};
-                if (!tree[niv][cls][mat]) tree[niv][cls][mat] = [];
-                
-                tree[niv][cls][mat].push(l);
-            });
+            lessons.forEach(l => { const niv = l.niveau || "Autre"; const cls = l.classe || "Général"; const mat = l.matiere || "Divers"; if (!tree[niv]) tree[niv] = {}; if (!tree[niv][cls]) tree[niv][cls] = {}; if (!tree[niv][cls][mat]) tree[niv][cls][mat] = []; tree[niv][cls][mat].push(l); });
 
-            // 2. Générer le HTML
             for (const niv in tree) {
-                // Niveau Details
-                const nivDetails = document.createElement('details');
-                nivDetails.open = true; // Ouvert par défaut
-                nivDetails.className = "mb-2 group";
-                
-                const nivSummary = document.createElement('summary');
-                nivSummary.className = "font-black text-slate-700 hover:text-blue-600 p-2 rounded bg-slate-100 flex items-center gap-2 select-none";
-                nivSummary.innerHTML = `<i class="fas fa-chevron-right text-xs arrow text-gray-400 transition"></i> <i class="fas fa-layer-group text-blue-500"></i> ${niv}`;
-                
-                const nivContent = document.createElement('div');
-                nivContent.className = "tree-level";
-
+                const nivDetails = document.createElement('details'); nivDetails.open = true; nivDetails.className = "mb-2 group";
+                const nivSummary = document.createElement('summary'); nivSummary.className = "font-black text-slate-700 hover:text-blue-600 p-2 rounded bg-slate-100 flex items-center gap-2 select-none"; nivSummary.innerHTML = `<i class="fas fa-chevron-right text-xs arrow text-gray-400 transition"></i> <i class="fas fa-layer-group text-blue-500"></i> ${niv}`;
+                const nivContent = document.createElement('div'); nivContent.className = "tree-level";
                 for (const cls in tree[niv]) {
-                    // Classe Details
-                    const clsDetails = document.createElement('details');
-                    clsDetails.className = "mt-1";
-                    
-                    const clsSummary = document.createElement('summary');
-                    clsSummary.className = "font-bold text-sm text-slate-600 hover:text-blue-500 p-1.5 flex items-center gap-2 select-none";
-                    clsSummary.innerHTML = `<i class="fas fa-chevron-right text-[10px] arrow text-gray-300 transition"></i> ${cls}`;
-                    
-                    const clsContent = document.createElement('div');
-                    clsContent.className = "tree-level border-l border-gray-200 ml-3 pl-2";
-
+                    const clsDetails = document.createElement('details'); clsDetails.className = "mt-1";
+                    const clsSummary = document.createElement('summary'); clsSummary.className = "font-bold text-sm text-slate-600 hover:text-blue-500 p-1.5 flex items-center gap-2 select-none"; clsSummary.innerHTML = `<i class="fas fa-chevron-right text-[10px] arrow text-gray-300 transition"></i> ${cls}`;
+                    const clsContent = document.createElement('div'); clsContent.className = "tree-level border-l border-gray-200 ml-3 pl-2";
                     for (const mat in tree[niv][cls]) {
-                        // Matière Details
-                        const matDetails = document.createElement('details');
-                        matDetails.className = "mt-1";
-                        
-                        const matSummary = document.createElement('summary');
-                        matSummary.className = "font-semibold text-xs text-slate-500 hover:text-blue-500 p-1 flex items-center gap-2 select-none uppercase tracking-wide";
-                        matSummary.innerHTML = `<i class="fas fa-chevron-right text-[10px] arrow text-gray-300 transition"></i> ${mat}`;
-                        
-                        const matContent = document.createElement('div');
-                        matContent.className = "ml-4 mt-1 space-y-1";
-
-                        // Liste des Leçons
-                        tree[niv][cls][mat].forEach(l => {
-                            const lessonLink = document.createElement('div');
-                            lessonLink.className = "text-xs p-2 rounded cursor-pointer hover:bg-blue-50 text-slate-600 hover:text-blue-700 transition truncate border-l-2 border-transparent hover:border-blue-500";
-                            lessonLink.innerText = l.titre;
-                            lessonLink.onclick = () => fetchAndDisplayLesson(l.id);
-                            matContent.appendChild(lessonLink);
-                        });
-
-                        matDetails.appendChild(matSummary);
-                        matDetails.appendChild(matContent);
-                        clsContent.appendChild(matDetails);
+                        const matDetails = document.createElement('details'); matDetails.className = "mt-1";
+                        const matSummary = document.createElement('summary'); matSummary.className = "font-semibold text-xs text-slate-500 hover:text-blue-500 p-1 flex items-center gap-2 select-none uppercase tracking-wide"; matSummary.innerHTML = `<i class="fas fa-chevron-right text-[10px] arrow text-gray-300 transition"></i> ${mat}`;
+                        const matContent = document.createElement('div'); matContent.className = "ml-4 mt-1 space-y-1";
+                        tree[niv][cls][mat].forEach(l => { const lessonLink = document.createElement('div'); lessonLink.className = "text-xs p-2 rounded cursor-pointer hover:bg-blue-50 text-slate-600 hover:text-blue-700 transition truncate border-l-2 border-transparent hover:border-blue-500"; lessonLink.innerText = l.titre; lessonLink.onclick = () => fetchAndDisplayLesson(l.id); matContent.appendChild(lessonLink); });
+                        matDetails.appendChild(matSummary); matDetails.appendChild(matContent); clsContent.appendChild(matDetails);
                     }
-                    clsDetails.appendChild(clsSummary);
-                    clsDetails.appendChild(clsContent);
-                    nivContent.appendChild(clsDetails);
+                    clsDetails.appendChild(clsSummary); clsDetails.appendChild(clsContent); nivContent.appendChild(clsDetails);
                 }
-                nivDetails.appendChild(nivSummary);
-                nivDetails.appendChild(nivContent);
-                container.appendChild(nivDetails);
+                nivDetails.appendChild(nivSummary); nivDetails.appendChild(nivContent); container.appendChild(nivDetails);
             }
         }
 
-        // --- GESTION RECHERCHE (Rebascule en liste plate) ---
         window.handleSearch = function() {
             const query = document.getElementById('search-lesson').value.toLowerCase();
-            if (query.length === 0) {
-                // Si recherche vide, on remet l'arbre
-                const urlParams = new URLSearchParams(window.location.search);
-                const filterParam = urlParams.get('filter');
-                if(filterParam) buildAndRenderTree(allLessons.filter(l => l.niveau === filterParam));
-                else buildAndRenderTree(allLessons);
-                return;
-            }
-
-            // Si recherche active, on affiche une liste plate (plus lisible)
-            const filtered = allLessons.filter(l => 
-                (l.titre && l.titre.toLowerCase().includes(query)) || 
-                (l.matiere && l.matiere.toLowerCase().includes(query))
-            );
-
-            const container = document.getElementById('lesson-sidebar-content');
-            container.innerHTML = '';
-            
-            if(filtered.length === 0) {
-                container.innerHTML = '<p class="text-gray-400 text-sm text-center mt-4">Aucun résultat.</p>';
-                return;
-            }
-
-            filtered.forEach(l => {
-                container.innerHTML += `
-                    <div onclick="fetchAndDisplayLesson(${l.id})" class="p-3 mx-1 rounded-lg hover:bg-blue-50 cursor-pointer border-b border-gray-50 group">
-                        <div class="text-[10px] uppercase font-bold text-gray-400 mb-1">${l.niveau} > ${l.matiere}</div>
-                        <div class="text-sm font-bold text-slate-700 group-hover:text-blue-600">${l.titre}</div>
-                    </div>
-                `;
-            });
+            if (query.length === 0) { const urlParams = new URLSearchParams(window.location.search); const filterParam = urlParams.get('filter'); if(filterParam) buildAndRenderTree(allLessons.filter(l => l.niveau === filterParam)); else buildAndRenderTree(allLessons); return; }
+            const filtered = allLessons.filter(l => (l.titre && l.titre.toLowerCase().includes(query)) || (l.matiere && l.matiere.toLowerCase().includes(query)));
+            const container = document.getElementById('lesson-sidebar-content'); container.innerHTML = '';
+            if(filtered.length === 0) { container.innerHTML = '<p class="text-gray-400 text-sm text-center mt-4">Aucun résultat.</p>'; return; }
+            filtered.forEach(l => { container.innerHTML += `<div onclick="fetchAndDisplayLesson(${l.id})" class="p-3 mx-1 rounded-lg hover:bg-blue-50 cursor-pointer border-b border-gray-50 group"><div class="text-[10px] uppercase font-bold text-gray-400 mb-1">${l.niveau} > ${l.matiere}</div><div class="text-sm font-bold text-slate-700 group-hover:text-blue-600">${l.titre}</div></div>`; });
         }
 
         window.toggleSidebar = function() { document.querySelector('aside').classList.toggle('hidden'); }
 
-        // --- AFFICHAGE DU COURS ---
         window.fetchAndDisplayLesson = async function(id) {
-            document.getElementById('welcome-screen').classList.add('hidden');
-            document.getElementById('lesson-content').classList.remove('hidden');
-            if(window.innerWidth < 768) document.querySelector('aside').classList.add('hidden');
-            
-            const { data, error } = await supabase.from('lessons').select('*').eq('id', id).single();
-            if (error || !data) return alert("Erreur chargement cours");
-
-            document.getElementById('lesson-niveau').innerText = data.niveau || 'Niveau';
-            document.getElementById('lesson-matiere').innerText = data.matiere || 'Matière';
-            document.getElementById('lesson-title').innerText = data.titre;
-
-            if(data.audio_url) {
-                document.getElementById('audio-player-container').classList.remove('hidden');
-                document.getElementById('audio-player').src = data.audio_url;
-            } else {
-                document.getElementById('audio-player-container').classList.add('hidden');
-            }
-
-            try {
-                const jsonContent = JSON.parse(data.contenu_html);
-                currentLessonData = jsonContent;
-                renderLessonFromJSON(jsonContent);
-            } catch (e) {
-                currentLessonData = { simple_text: data.contenu_html };
-                renderLessonSimple(data.contenu_html);
-            }
-            switchTab('lecon');
+            document.getElementById('welcome-screen').classList.add('hidden'); document.getElementById('lesson-content').classList.remove('hidden'); if(window.innerWidth < 768) document.querySelector('aside').classList.add('hidden');
+            const { data, error } = await supabase.from('lessons').select('*').eq('id', id).single(); if (error || !data) return alert("Erreur chargement cours");
+            document.getElementById('lesson-niveau').innerText = data.niveau || 'Niveau'; document.getElementById('lesson-matiere').innerText = data.matiere || 'Matière'; document.getElementById('lesson-title').innerText = data.titre;
+            if(data.audio_url) { document.getElementById('audio-player-container').classList.remove('hidden'); document.getElementById('audio-player').src = data.audio_url; } else { document.getElementById('audio-player-container').classList.add('hidden'); }
+            try { const jsonContent = JSON.parse(data.contenu_html); currentLessonData = jsonContent; renderLessonFromJSON(jsonContent); } catch (e) { currentLessonData = { simple_text: data.contenu_html }; renderLessonSimple(data.contenu_html); } switchTab('lecon');
         }
 
-        // --- RENDU CONTENU ---
         function renderLessonFromJSON(json) {
-            const c = json.contenu || {};
-            document.getElementById('lesson-subtitle').innerText = c.sous_titre || '';
-            let htmlLecon = `
-                <h3 class="font-bold text-xl text-blue-800 mb-2">Définition</h3>
-                <div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r mb-6">${c.definition || 'Pas de définition.'}</div>
-                <div class="mb-6">${marked.parse(c.explication || '')}</div>
-            `;
-            if(c.formules && c.formules.length > 0) {
-                htmlLecon += `<h3 class="font-bold text-xl text-blue-800 mb-2">Formules</h3>`;
-                c.formules.forEach(f => {
-                    htmlLecon += `<div class="formula-box"><div class="text-xs text-gray-500 mb-1">${f.label}</div>${f.code}</div>`;
-                });
-            }
-            if(c.etapes && c.etapes.length > 0) {
-                htmlLecon += `<h3 class="font-bold text-xl text-blue-800 mb-2">Méthode</h3><ol class="list-decimal pl-5 space-y-2">`;
-                c.etapes.forEach(e => htmlLecon += `<li>${e}</li>`);
-                htmlLecon += `</ol>`;
-            }
+            const c = json.contenu || {}; document.getElementById('lesson-subtitle').innerText = c.sous_titre || '';
+            let htmlLecon = `<h3 class="font-bold text-xl text-blue-800 mb-2">Définition</h3><div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r mb-6">${c.definition || 'Pas de définition.'}</div><div class="mb-6">${marked.parse(c.explication || '')}</div>`;
+            if(c.formules) c.formules.forEach(f => { htmlLecon += `<div class="formula-box"><div class="text-xs text-gray-500 mb-1">${f.label}</div>${f.code}</div>`; });
+            if(c.etapes) { htmlLecon += `<h3 class="font-bold text-xl text-blue-800 mb-2">Méthode</h3><ol class="list-decimal pl-5 space-y-2">`; c.etapes.forEach(e => htmlLecon += `<li>${e}</li>`); htmlLecon += `</ol>`; }
             document.getElementById('lecon-body').innerHTML = htmlLecon;
-
-            // REVISIONS
-            const r = json.revisions || {};
-            document.getElementById('revisions-list').innerHTML = (r.idees_essentielles || []).map(i => `<li>${i}</li>`).join('');
+            const r = json.revisions || {}; document.getElementById('revisions-list').innerHTML = (r.idees_essentielles || []).map(i => `<li>${i}</li>`).join('');
             document.getElementById('vocab-grid').innerHTML = (r.mots_cles || []).map(m => `<div class="bg-white p-3 rounded-lg border border-gray-200 shadow-sm"><span class="font-bold text-blue-600 block">${m.terme}</span><span class="text-sm text-gray-600">${m.definition}</span></div>`).join('');
-
-            // EXERCICES
-            const exList = document.getElementById('exercices-list');
-            exList.innerHTML = '';
-            (c.exercices || []).forEach((ex, idx) => {
-                exList.innerHTML += `<div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm"><div class="flex justify-between items-start mb-2"><span class="bg-slate-100 text-slate-600 text-xs font-bold px-2 py-1 rounded uppercase">Exercice ${idx+1}</span></div><p class="font-bold text-lg mb-2">${ex.enonce}</p><p class="text-slate-500 italic mb-4 text-sm">${ex.question}</p><button onclick="document.getElementById('sol-${idx}').classList.toggle('hidden')" class="text-blue-600 text-sm font-bold hover:underline mb-2">Voir la solution</button><div id="sol-${idx}" class="hidden bg-green-50 p-4 rounded-lg border border-green-100 text-green-800 font-medium text-sm mt-2">${ex.solution}</div></div>`;
-            });
-
-            // QUIZ
-            const qContainer = document.getElementById('quiz-container');
-            qContainer.innerHTML = '';
-            const questions = (json.quiz && json.quiz.questions) ? json.quiz.questions : [];
-            questions.forEach((q, qIdx) => {
-                let choicesHtml = q.choix.map((choix, cIdx) => `<div onclick="checkQuizAnswer(${qIdx}, ${cIdx}, this)" class="quiz-option cursor-pointer p-4 bg-white rounded-xl border border-indigo-100 hover:bg-indigo-50 transition mb-2">${choix}</div>`).join('');
-                qContainer.innerHTML += `<div class="mb-8 p-4 bg-white/10 rounded-xl border border-white/10"><p class="font-bold text-lg mb-4 text-white">Question ${qIdx+1}: ${q.question}</p><div class="text-slate-800">${choicesHtml}</div><div id="feedback-${qIdx}" class="hidden mt-2 p-3 rounded font-bold text-center"></div></div>`;
-            });
+            const exList = document.getElementById('exercices-list'); exList.innerHTML = ''; (c.exercices || []).forEach((ex, idx) => { exList.innerHTML += `<div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm"><div class="flex justify-between items-start mb-2"><span class="bg-slate-100 text-slate-600 text-xs font-bold px-2 py-1 rounded uppercase">Exercice ${idx+1}</span></div><p class="font-bold text-lg mb-2">${ex.enonce}</p><p class="text-slate-500 italic mb-4 text-sm">${ex.question}</p><button onclick="document.getElementById('sol-${idx}').classList.toggle('hidden')" class="text-blue-600 text-sm font-bold hover:underline mb-2">Voir la solution</button><div id="sol-${idx}" class="hidden bg-green-50 p-4 rounded-lg border border-green-100 text-green-800 font-medium text-sm mt-2">${ex.solution}</div></div>`; });
+            const qContainer = document.getElementById('quiz-container'); qContainer.innerHTML = ''; (json.quiz && json.quiz.questions ? json.quiz.questions : []).forEach((q, qIdx) => { let choicesHtml = q.choix.map((choix, cIdx) => `<div onclick="checkQuizAnswer(${qIdx}, ${cIdx}, this)" class="quiz-option cursor-pointer p-4 bg-white rounded-xl border border-indigo-100 hover:bg-indigo-50 transition mb-2">${choix}</div>`).join(''); qContainer.innerHTML += `<div class="mb-8 p-4 bg-white/10 rounded-xl border border-white/10"><p class="font-bold text-lg mb-4 text-white">Question ${qIdx+1}: ${q.question}</p><div class="text-slate-800">${choicesHtml}</div><div id="feedback-${qIdx}" class="hidden mt-2 p-3 rounded font-bold text-center"></div></div>`; });
         }
 
-        function renderLessonSimple(htmlContent) {
-            document.getElementById('lecon-body').innerHTML = htmlContent;
-            document.getElementById('revisions-list').innerHTML = "<li>Contenu non structuré.</li>";
-            document.getElementById('vocab-grid').innerHTML = "";
-            document.getElementById('exercices-list').innerHTML = "<p>Pas d'exercices.</p>";
-            document.getElementById('quiz-container').innerHTML = "<p>Pas de quiz.</p>";
-        }
-
-        window.switchTab = function(tabId) {
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-            document.getElementById('tab-' + tabId).classList.remove('hidden');
-            document.getElementById('btn-' + tabId).classList.add('active');
-        }
-
-        window.checkQuizAnswer = function(qIdx, cIdx, element) {
-            const questionData = currentLessonData.quiz.questions[qIdx];
-            const choiceText = questionData.choix[cIdx];
-            // Comparaison simple texte (ou index si votre JSON utilise des index)
-            const isCorrect = questionData.reponses.includes(choiceText);
-            const feedbackEl = document.getElementById(`feedback-${qIdx}`);
-            feedbackEl.classList.remove('hidden');
-            element.parentElement.querySelectorAll('.quiz-option').forEach(el => el.classList.add('opacity-50'));
-            element.classList.remove('opacity-50');
-            if(isCorrect) {
-                element.style.backgroundColor = '#dcfce7'; element.style.borderColor = '#22c55e';
-                feedbackEl.className = "mt-2 p-3 rounded font-bold text-center bg-green-100 text-green-800";
-                feedbackEl.innerText = questionData.feedback.correct || "Correct !";
-            } else {
-                element.style.backgroundColor = '#fee2e2'; element.style.borderColor = '#ef4444';
-                feedbackEl.className = "mt-2 p-3 rounded font-bold text-center bg-red-100 text-red-800";
-                feedbackEl.innerText = questionData.feedback.incorrect || "Faux.";
-            }
-        }
-
-        window.generatePDF = function() {
-            if(!currentLessonData || !currentLessonData.contenu) return alert("Données insuffisantes.");
-            const doc = new jsPDF();
-            const c = currentLessonData.contenu;
-            doc.setFontSize(20); doc.setTextColor(37, 99, 235); doc.text(c.titre || "Fiche", 20, 20);
-            doc.setFontSize(12); doc.setTextColor(100); doc.text(`Matière: ${currentLessonData.meta.matiere}`, 20, 30);
-            let y = 50;
-            (c.exercices || []).forEach((ex, i) => {
-                if(y>270){doc.addPage();y=20;} doc.setFontSize(14); doc.setTextColor(0); doc.text(`Ex ${i+1}`,20,y); y+=7;
-                const splitEnonce = doc.splitTextToSize(ex.enonce, 170); doc.setFontSize(12); doc.text(splitEnonce, 20, y); y += (splitEnonce.length * 5) + 15;
-            });
-            doc.save(`fiche_${c.titre}.pdf`);
-        }
-
+        function renderLessonSimple(htmlContent) { document.getElementById('lecon-body').innerHTML = htmlContent; document.getElementById('revisions-list').innerHTML = "<li>Contenu non structuré.</li>"; document.getElementById('vocab-grid').innerHTML = ""; document.getElementById('exercices-list').innerHTML = "<p>Pas d'exercices.</p>"; document.getElementById('quiz-container').innerHTML = "<p>Pas de quiz.</p>"; }
+        window.switchTab = function(tabId) { document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden')); document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active')); document.getElementById('tab-' + tabId).classList.remove('hidden'); document.getElementById('btn-' + tabId).classList.add('active'); }
+        window.checkQuizAnswer = function(qIdx, cIdx, element) { const questionData = currentLessonData.quiz.questions[qIdx]; const choiceText = questionData.choix[cIdx]; const isCorrect = questionData.reponses.includes(choiceText); const feedbackEl = document.getElementById(`feedback-${qIdx}`); feedbackEl.classList.remove('hidden'); element.parentElement.querySelectorAll('.quiz-option').forEach(el => el.classList.add('opacity-50')); element.classList.remove('opacity-50'); if(isCorrect) { element.style.backgroundColor = '#dcfce7'; element.style.borderColor = '#22c55e'; feedbackEl.className = "mt-2 p-3 rounded font-bold text-center bg-green-100 text-green-800"; feedbackEl.innerText = questionData.feedback.correct || "Correct !"; } else { element.style.backgroundColor = '#fee2e2'; element.style.borderColor = '#ef4444'; feedbackEl.className = "mt-2 p-3 rounded font-bold text-center bg-red-100 text-red-800"; feedbackEl.innerText = questionData.feedback.incorrect || "Faux."; } }
+        window.generatePDF = function() { if(!currentLessonData || !currentLessonData.contenu) return alert("Données insuffisantes."); const doc = new jsPDF(); const c = currentLessonData.contenu; doc.setFontSize(20); doc.setTextColor(37, 99, 235); doc.text(c.titre || "Fiche", 20, 20); doc.setFontSize(12); doc.setTextColor(100); doc.text(`Matière: ${currentLessonData.meta.matiere}`, 20, 30); let y = 50; (c.exercices || []).forEach((ex, i) => { if(y>270){doc.addPage();y=20;} doc.setFontSize(14); doc.setTextColor(0); doc.text(`Ex ${i+1}`,20,y); y+=7; const splitEnonce = doc.splitTextToSize(ex.enonce, 170); doc.setFontSize(12); doc.text(splitEnonce, 20, y); y += (splitEnonce.length * 5) + 15; }); doc.save(`fiche_${c.titre}.pdf`); }
         window.toggleChat = function() { document.getElementById('chat-window').classList.toggle('hidden'); }
-        window.sendMessage = async function() {
-            const input = document.getElementById('chat-input'); const msg = input.value; if (!msg) return;
-            const box = document.getElementById('chatbox'); 
-            box.innerHTML += `<div class="text-right mb-4"><span class="bg-blue-600 text-white px-4 py-2 rounded-xl text-sm">${msg}</span></div>`;
-            input.value = ''; box.scrollTop = box.scrollHeight; 
-            try {
-                const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-                const context = `Tu es prof. Cours: ${document.getElementById('lesson-title').innerText}.`;
-                const result = await model.generateContent([context + " Question: " + msg]);
-                box.innerHTML += `<div class="text-left mb-4"><span class="bg-white border border-gray-200 px-4 py-2 rounded-xl text-sm">${marked.parse(result.response.text())}</span></div>`;
-                box.scrollTop = box.scrollHeight;
-            } catch(e){}
-        }
+        window.sendMessage = async function() { const input = document.getElementById('chat-input'); const msg = input.value; if (!msg) return; const box = document.getElementById('chatbox'); box.innerHTML += `<div class="text-right mb-4"><span class="bg-blue-600 text-white px-4 py-2 rounded-xl text-sm">${msg}</span></div>`; input.value = ''; box.scrollTop = box.scrollHeight; try { const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" }); const context = `Tu es prof. Cours: ${document.getElementById('lesson-title').innerText}.`; const result = await model.generateContent([context + " Question: " + msg]); box.innerHTML += `<div class="text-left mb-4"><span class="bg-white border border-gray-200 px-4 py-2 rounded-xl text-sm">${marked.parse(result.response.text())}</span></div>`; box.scrollTop = box.scrollHeight; } catch(e){} }
     </script>
 </body>
 </html>
