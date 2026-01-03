@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin (Mode Dev) - Studio SchoolAI</title>
+    <title>Admin - Studio SchoolAI</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@700&family=Inter:wght@400;700&display=swap" rel="stylesheet">
@@ -12,11 +12,7 @@
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
-<body class="bg-slate-50 min-h-screen font-sans text-slate-800" id="body-content">
-
-    <div class="bg-yellow-400 text-yellow-900 text-center text-xs font-bold py-1">
-        🚧 MODE DÉVELOPPEUR : AUTHENTIFICATION DÉSACTIVÉE
-    </div>
+<body class="bg-slate-50 min-h-screen font-sans text-slate-800 hidden" id="body-content">
 
     <div class="max-w-6xl mx-auto py-8 px-4">
         
@@ -24,6 +20,7 @@
             <h1 class="text-2xl font-black text-blue-900"><i class="fas fa-magic text-blue-600 mr-3"></i>Studio SchoolAI</h1>
             <div class="flex gap-4 items-center mt-4 md:mt-0">
                 <a href="index.html" class="text-gray-500 hover:text-blue-600 font-bold text-sm flex items-center">Voir le site <i class="fas fa-external-link-alt ml-2"></i></a>
+                <button onclick="logout()" class="bg-red-50 text-red-600 px-4 py-2 rounded-lg font-bold text-sm hover:bg-red-100 transition border border-red-200"><i class="fas fa-sign-out-alt mr-2"></i>Déconnexion</button>
             </div>
         </div>
 
@@ -102,10 +99,7 @@
                     <h2 class="font-bold text-xl text-slate-800">Commandes en attente (MVola)</h2>
                     <button onclick="fetchSales()" class="bg-blue-100 text-blue-600 px-4 py-2 rounded-lg font-bold hover:bg-blue-200 transition"><i class="fas fa-sync-alt mr-2"></i>Actualiser</button>
                 </div>
-                
-                <div id="sales-list" class="space-y-4">
-                    <div class="text-center py-10 text-gray-400">Chargement...</div>
-                </div>
+                <div id="sales-list" class="space-y-4"><div class="text-center py-10 text-gray-400">Chargement...</div></div>
             </div>
         </div>
 
@@ -132,8 +126,10 @@
         import { GoogleGenerativeAI } from "https://esm.run/@google/generative-ai";
         import { createClient } from "https://esm.run/@supabase/supabase-js";
 
-        // CONFIGURATION
-        const API_KEY_GEMINI = "AIzaSyCGOKXvbeH4PAol1XalwqFBHh0rRlAKcPc"; 
+        // --- CONFIGURATION ---
+        // ICI : On utilise le placeholder pour Netlify
+        const API_KEY_GEMINI = "TOKEN_REMPLACEMENT_ICI"; 
+        
         const SUPABASE_URL = "https://jdxdthxztokjhprwynyf.supabase.co";
         const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpkeGR0aHh6dG9ramhwcnd5bnlmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcxODAyNzgsImV4cCI6MjA4Mjc1NjI3OH0.zal-p0RKJ-PYGvzal1K9-asbUbyQmqG5OtPTWnoHQmI";
 
@@ -144,8 +140,14 @@
         let existingData = [], allLessons = [], allAds = [], isNewMode = false;
         let detectedType = null;
 
-        // --- INIT ---
+        // --- INITIALISATION AVEC SECURITÉ ---
         window.onload = async function() {
+            // 1. Vérification Connexion (La sécurité est rétablie ici)
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) { window.location.href = 'login.html'; return; }
+            document.getElementById('body-content').classList.remove('hidden');
+
+            // 2. Chargement données
             const { data } = await supabase.from('lessons').select('niveau, classe, matiere');
             if(data) {
                 existingData = data;
@@ -156,10 +158,12 @@
             }
             fetchAllLessons();
             fetchAds();
-            fetchSales(); // Charger les ventes au démarrage
+            fetchSales();
         };
 
-        // --- TABS ---
+        window.logout = async function() { await supabase.auth.signOut(); window.location.href = 'login.html'; }
+
+        // --- GESTION TABS & UI ---
         window.switchTab = function(t) { 
             ['create','manage','sales','ads'].forEach(id => document.getElementById('view-'+id).classList.toggle('hidden', id !== t));
             ['tab-create','tab-manage','tab-sales','tab-ads'].forEach(id => {
@@ -171,83 +175,29 @@
             if(t === 'sales') fetchSales();
         }
 
-        // --- GESTION VENTES (MVola) ---
+        // --- SALES (MVola) ---
         window.fetchSales = async function() {
             const list = document.getElementById('sales-list');
             list.innerHTML = '<div class="text-center py-4 text-gray-400"><i class="fas fa-spinner fa-spin"></i> Chargement...</div>';
-
-            // 1. Récupérer les achats en attente
-            const { data: achats, error } = await supabase
-                .from('achats')
-                .select('*')
-                .eq('statut', 'en_attente')
-                .order('created_at', { ascending: false });
-
-            if(error) {
-                list.innerHTML = `<div class="text-red-500">Erreur: ${error.message}</div>`;
-                return;
-            }
-
-            if(!achats || achats.length === 0) {
-                list.innerHTML = '<div class="text-center py-10 bg-gray-50 rounded-xl text-gray-500 font-bold">Aucune commande en attente.</div>';
-                return;
-            }
-
+            const { data: achats, error } = await supabase.from('achats').select('*').eq('statut', 'en_attente').order('created_at', { ascending: false });
+            if(error) { list.innerHTML = `<div class="text-red-500">Erreur: ${error.message}</div>`; return; }
+            if(!achats || achats.length === 0) { list.innerHTML = '<div class="text-center py-10 bg-gray-50 rounded-xl text-gray-500 font-bold">Aucune commande en attente.</div>'; return; }
             list.innerHTML = '';
-            
-            // 2. Pour chaque achat, on récupère les infos du User et du Livre
             for (const achat of achats) {
-                // Info User
                 const { data: userProfile } = await supabase.from('profiles').select('*').eq('id', achat.user_id).single();
-                
-                // Info Livre (On cherche par ID si c'est un UUID valide, sinon on affiche l'ID texte)
                 let bookTitle = "Livre inconnu (" + achat.document_id + ")";
-                
-                // On essaie de trouver le titre si l'ID correspond à une leçon
                 const { data: book } = await supabase.from('lessons').select('titre').eq('id', achat.document_id).maybeSingle();
                 if(book) bookTitle = book.titre;
-
                 const nomClient = userProfile ? `${userProfile.prenom} ${userProfile.nom}` : "Client Inconnu";
                 const telClient = userProfile ? userProfile.telephone : "N/A";
                 const dateCmd = new Date(achat.created_at).toLocaleString('fr-FR');
-
-                list.innerHTML += `
-                    <div class="bg-yellow-50 border border-yellow-200 p-6 rounded-xl flex flex-col md:flex-row justify-between items-center gap-4 shadow-sm animate-fade-in">
-                        <div class="flex-1">
-                            <div class="flex items-center gap-2 mb-2">
-                                <span class="bg-yellow-200 text-yellow-800 text-xs font-bold px-2 py-1 rounded-full uppercase tracking-wide">En attente</span>
-                                <span class="text-gray-400 text-xs">${dateCmd}</span>
-                            </div>
-                            <h3 class="font-black text-lg text-slate-800 mb-1">${bookTitle}</h3>
-                            <p class="text-sm text-gray-600">👤 Client : <span class="font-bold">${nomClient}</span></p>
-                            <p class="text-sm text-gray-600">📱 Tél : <span class="font-mono font-bold bg-white px-1 rounded border">${telClient}</span></p>
-                        </div>
-                        <div class="flex gap-3 w-full md:w-auto">
-                            <button onclick="deleteSale('${achat.id}')" class="flex-1 md:flex-none px-4 py-2 text-red-500 font-bold text-sm border border-red-200 rounded-lg hover:bg-red-50 transition">Refuser</button>
-                            <button onclick="validateSale('${achat.id}')" class="flex-1 md:flex-none px-6 py-3 bg-green-500 text-white font-bold rounded-xl shadow hover:bg-green-600 transition transform hover:scale-105 flex items-center gap-2">
-                                <i class="fas fa-check-circle"></i> Valider (500 Ar)
-                            </button>
-                        </div>
-                    </div>
-                `;
+                list.innerHTML += `<div class="bg-yellow-50 border border-yellow-200 p-6 rounded-xl flex flex-col md:flex-row justify-between items-center gap-4 shadow-sm animate-fade-in"><div class="flex-1"><div class="flex items-center gap-2 mb-2"><span class="bg-yellow-200 text-yellow-800 text-xs font-bold px-2 py-1 rounded-full uppercase tracking-wide">En attente</span><span class="text-gray-400 text-xs">${dateCmd}</span></div><h3 class="font-black text-lg text-slate-800 mb-1">${bookTitle}</h3><p class="text-sm text-gray-600">👤 Client : <span class="font-bold">${nomClient}</span></p><p class="text-sm text-gray-600">📱 Tél : <span class="font-mono font-bold bg-white px-1 rounded border">${telClient}</span></p></div><div class="flex gap-3 w-full md:w-auto"><button onclick="deleteSale('${achat.id}')" class="flex-1 md:flex-none px-4 py-2 text-red-500 font-bold text-sm border border-red-200 rounded-lg hover:bg-red-50 transition">Refuser</button><button onclick="validateSale('${achat.id}')" class="flex-1 md:flex-none px-6 py-3 bg-green-500 text-white font-bold rounded-xl shadow hover:bg-green-600 transition transform hover:scale-105 flex items-center gap-2"><i class="fas fa-check-circle"></i> Valider (500 Ar)</button></div></div>`;
             }
         };
+        window.validateSale = async function(id) { if(!confirm("Reçu l'argent ?")) return; await supabase.from('achats').update({ statut: 'valide', date_validation: new Date() }).eq('id', id); fetchSales(); };
+        window.deleteSale = async function(id) { if(!confirm("Supprimer ?")) return; await supabase.from('achats').delete().eq('id', id); fetchSales(); };
 
-        window.validateSale = async function(id) {
-            if(!confirm("Confirmez-vous avoir reçu l'argent ?")) return;
-            const { error } = await supabase.from('achats').update({ statut: 'valide', date_validation: new Date() }).eq('id', id);
-            if(error) alert("Erreur: " + error.message);
-            else fetchSales(); // Rafraichir la liste
-        };
-
-        window.deleteSale = async function(id) {
-            if(!confirm("Supprimer cette demande ?")) return;
-            const { error } = await supabase.from('achats').delete().eq('id', id);
-            if(error) alert("Erreur: " + error.message);
-            else fetchSales();
-        };
-
-        // --- AUTRES FONCTIONS (Déjà présentes avant) ---
+        // --- CORE FUNCTIONS (Upload & IA) ---
         window.handleFileSelect = function() {
             const file = document.getElementById('fileInput').files[0];
             const indicator = document.getElementById('mode-indicator');
@@ -268,12 +218,9 @@
             let niveau = isNewMode ? document.getElementById('new-niveau').value : document.getElementById('select-niveau').value;
             let classe = isNewMode ? document.getElementById('new-classe').value : document.getElementById('select-classe').value;
             let matiere = isNewMode ? document.getElementById('new-matiere').value : document.getElementById('select-matiere').value;
-            
             if (detectedType === 'epub' && !document.getElementById('meta-genre').value) return alert("Genre requis !");
             if (!file && !document.getElementById('rawText').value) return alert("Rien à traiter");
-
             statusDiv.innerHTML = 'Traitement...';
-
             try {
                 let fileUrl = null, dbObjects = [];
                 if (file && detectedType === 'epub') {
@@ -282,7 +229,6 @@
                     const { data } = supabase.storage.from('library').getPublicUrl(fileName);
                     fileUrl = data.publicUrl;
                 }
-
                 if (file && !editId && detectedType !== 'epub') {
                     const base64File = await fileToBase64(file);
                     const prompt = `Transforme ce PDF en leçon HTML JSON : [{ "titre": "...", "html_content": "...", "quiz": [...] }]`;
@@ -294,12 +240,9 @@
                 } else {
                     dbObjects = [{ niveau, classe, matiere, titre: document.getElementById('rawTitle').value, contenu_html: document.getElementById('rawText').value, type_contenu: 'pdf_genere', audio_url: document.getElementById('audioInput').value }];
                 }
-
                 if(editId) await supabase.from('lessons').update(dbObjects[0]).eq('id', editId);
                 else await supabase.from('lessons').insert(dbObjects);
-                
-                statusDiv.innerHTML = '✅ Succès !';
-                setTimeout(() => window.location.reload(), 2000);
+                statusDiv.innerHTML = '✅ Succès !'; setTimeout(() => window.location.reload(), 2000);
             } catch(e) { statusDiv.innerHTML = 'Erreur: ' + e.message; }
         }
 
