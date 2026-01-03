@@ -127,24 +127,26 @@
         import { createClient } from "https://esm.run/@supabase/supabase-js";
 
         // --- CONFIGURATION ---
-        // ICI : On utilise le placeholder pour Netlify
-        const API_KEY_GEMINI = "TOKEN_REMPLACEMENT_ICI"; 
-        
-        const SUPABASE_URL = "https://jdxdthxztokjhprwynyf.supabase.co";
-        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpkeGR0aHh6dG9ramhwcnd5bnlmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcxODAyNzgsImV4cCI6MjA4Mjc1NjI3OH0.zal-p0RKJ-PYGvzal1K9-asbUbyQmqG5OtPTWnoHQmI";
+        const ADMIN_EMAIL = "votre-email-admin@gmail.com"; // MÊME EMAIL QUE DANS LOGIN
 
-        const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
-        const genAI = new GoogleGenerativeAI(API_KEY_GEMINI);
-        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-
-        let existingData = [], allLessons = [], allAds = [], isNewMode = false;
-        let detectedType = null;
-
-        // --- INITIALISATION AVEC SECURITÉ ---
         window.onload = async function() {
-            // 1. Vérification Connexion (La sécurité est rétablie ici)
+            // 1. Vérification Connexion & Identité
             const { data: { session } } = await supabase.auth.getSession();
-            if (!session) { window.location.href = 'login.html'; return; }
+            
+            // Si pas connecté -> Dehors
+            if (!session) { 
+                window.location.href = 'login.html'; 
+                return; 
+            }
+
+            // Si connecté mais pas Admin -> Dehors vers l'accueil
+            if (session.user.email !== ADMIN_EMAIL) {
+                alert("Accès refusé. Réservé à l'administration.");
+                window.location.href = 'index.html';
+                return;
+            }
+
+            // Si on arrive ici, c'est que c'est bien VOUS.
             document.getElementById('body-content').classList.remove('hidden');
 
             // 2. Chargement données
@@ -263,3 +265,4 @@
     </script>
 </body>
 </html>
+
