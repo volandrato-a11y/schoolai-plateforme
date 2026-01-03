@@ -2,147 +2,201 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Lecture</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lecture - SchoolAI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.5/jszip.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/epubjs/dist/epub.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/epub.js/0.3.93/epub.min.js"></script>
     <style>
-        body { font-family: sans-serif; max-width: 800px; margin: auto; padding: 20px; }
-        #actions { margin: 20px 0; padding: 20px; background: #f9f9f9; border-radius: 8px; }
-        #viewer { height: 600px; border: 1px solid #ddd; display: none; }
-        .btn { padding: 10px 20px; color: white; border: none; cursor: pointer; text-decoration: none; margin-right: 10px; }
-        .btn-pay { background: #e74c3c; }
-        .btn-read { background: #3498db; }
-        .btn-down { background: #27ae60; }
-        
-        /* Modal Paiement */
-        #modal { display: none; position: fixed; top:20%; left:30%; width:400px; background:white; padding:20px; box-shadow:0 0 10px rgba(0,0,0,0.5); border-radius:8px; }
+        #viewer { height: 80vh; overflow: hidden; background: #fff; }
+        .arrow-btn { position: fixed; top: 50%; transform: translateY(-50%); z-index: 50; background: rgba(255,255,255,0.8); padding: 1rem; border-radius: 50%; box-shadow: 0 4px 6px rgba(0,0,0,0.1); cursor: pointer; transition: all 0.2s; }
+        .arrow-btn:hover { background: white; transform: translateY(-50%) scale(1.1); }
     </style>
 </head>
-<body>
+<body class="bg-slate-100 h-screen flex flex-col overflow-hidden">
 
-    <div id="infos-livre">Chargement...</div>
+    <nav class="bg-white shadow-sm px-4 py-2 flex justify-between items-center z-50 shrink-0 h-16">
+        <div class="flex items-center gap-3 overflow-hidden">
+            <a href="biblio.html" class="text-gray-500 hover:text-purple-600 transition"><i class="fas fa-arrow-left text-lg"></i></a>
+            <h1 id="book-title" class="font-bold text-slate-800 truncate text-sm md:text-base">Chargement...</h1>
+        </div>
+        <div id="reader-controls" class="flex items-center gap-2 hidden">
+            <button onclick="changeFontSize(-2)" class="p-2 text-gray-500 hover:bg-gray-100 rounded"><i class="fas fa-minus-circle"></i></button>
+            <span class="text-xs font-bold text-gray-400">Aa</span>
+            <button onclick="changeFontSize(2)" class="p-2 text-gray-500 hover:bg-gray-100 rounded"><i class="fas fa-plus-circle"></i></button>
+        </div>
+    </nav>
 
-    <div id="actions">
+    <div class="flex-1 relative flex items-center justify-center bg-white shadow-2xl mx-auto w-full max-w-4xl my-0 md:my-4 rounded-none md:rounded-xl overflow-hidden relative">
+        
+        <div id="loading-screen" class="absolute inset-0 flex flex-col items-center justify-center bg-white z-50">
+            <i class="fas fa-circle-notch fa-spin text-4xl text-purple-600 mb-4"></i>
+            <p id="loading-text" class="text-sm text-gray-500">Vérification des droits...</p>
         </div>
 
-    <div id="viewer"></div>
+        <div id="paywall" class="hidden absolute inset-0 z-40 bg-white flex flex-col items-center justify-center p-8 text-center overflow-y-auto">
+            <div class="max-w-md w-full">
+                <div class="w-20 h-20 bg-yellow-100 text-yellow-600 rounded-full flex items-center justify-center mx-auto mb-6 text-3xl">
+                    <i class="fas fa-lock"></i>
+                </div>
+                <h2 class="text-2xl font-black text-slate-800 mb-2">Lecture verrouillée</h2>
+                <p class="text-gray-500 mb-6">Ce livre est disponible pour seulement <span class="font-bold text-slate-800">500 Ar</span>.</p>
+                
+                <div class="bg-purple-50 p-4 rounded-xl border border-purple-100 mb-6 text-left">
+                    <h3 class="font-bold text-purple-800 text-sm uppercase mb-2">Résumé</h3>
+                    <p id="book-summary" class="text-sm text-gray-600 italic">Un excellent livre à découvrir.</p>
+                </div>
 
-    <div id="modal">
-        <h3>Paiement requis</h3>
-        <p>Payer au <strong>034 91 207 26 (Ndrato)</strong></p>
-        <form id="form-pay">
-            <input type="text" id="nom" placeholder="Nom" required style="width:90%; margin:5px 0;"><br>
-            <input type="text" id="num" placeholder="Numéro" required style="width:90%; margin:5px 0;"><br>
-            <input type="text" id="tid" placeholder="Transaction ID" required style="width:90%; margin:5px 0;"><br>
-            <button type="submit" class="btn btn-pay">Envoyer</button>
-            <button type="button" onclick="document.getElementById('modal').style.display='none'">Annuler</button>
-        </form>
+                <div class="space-y-3">
+                    <button onclick="startPayment()" class="w-full bg-[#25D366] hover:bg-[#20b858] text-white font-bold py-3 rounded-xl shadow-lg flex justify-center items-center gap-2 transition transform hover:scale-[1.01]">
+                        <i class="fab fa-whatsapp text-xl"></i> Acheter via WhatsApp
+                    </button>
+                    <button onclick="declarePayment()" id="btn-declare" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-3 rounded-xl border border-slate-200 transition text-sm">
+                        J'ai déjà payé, vérifier mon accès
+                    </button>
+                </div>
+                
+                <p id="payment-status" class="mt-4 text-xs font-bold text-orange-500 hidden"></p>
+            </div>
+        </div>
+
+        <div id="reader-container" class="w-full h-full relative hidden">
+            <button class="arrow-btn left-2 md:left-4" onclick="rendition.prev()"><i class="fas fa-chevron-left text-gray-600"></i></button>
+            <div id="viewer" class="w-full h-full"></div>
+            <button class="arrow-btn right-2 md:right-4" onclick="rendition.next()"><i class="fas fa-chevron-right text-gray-600"></i></button>
+        </div>
+
     </div>
 
     <script type="module">
-        import { supabase } from './supabase-config.js';
+        import { createClient } from "https://esm.run/@supabase/supabase-js";
 
-        const params = new URLSearchParams(window.location.search);
-        const bookId = params.get('id');
-        const userId = "user_demo_1"; // ⚠️ Remplace par un vrai système de login si possible
+        const SUPABASE_URL = "https://jdxdthxztokjhprwynyf.supabase.co";
+        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpkeGR0aHh6dG9ramhwcnd5bnlmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcxODAyNzgsImV4cCI6MjA4Mjc1NjI3OH0.zal-p0RKJ-PYGvzal1K9-asbUbyQmqG5OtPTWnoHQmI";
+        const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
+        window.book = null;
+        window.rendition = null;
+        let currentFontSize = 100;
         let bookData = null;
+        let userData = null;
 
-        // 1. Charger Livre
-        async function init() {
-            const { data: livre } = await supabase.from('livres').select('*').eq('id', bookId).single();
-            if(!livre) return document.body.innerHTML = "Livre introuvable";
+        window.onload = async function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const bookId = urlParams.get('id');
+
+            if (!bookId) { window.location.href = 'biblio.html'; return; }
+
+            // 1. Récupérer l'User (Si pas connecté, on ne bloque pas tout de suite, on laisse voir le résumé)
+            const { data: { session } } = await supabase.auth.getSession();
+            if(session) userData = session.user;
+
+            // 2. Récupérer le Livre
+            const { data, error } = await supabase.from('lessons').select('*').eq('id', bookId).single();
+            if (error || !data) return alert("Livre introuvable");
+            bookData = data;
             
-            bookData = livre;
-            document.getElementById('infos-livre').innerHTML = `
-                <h1>${livre.titre}</h1>
-                <p>${livre.resume}</p>
-                <img src="${livre.cover_url}" style="width:100px;">
-            `;
+            document.getElementById('book-title').innerText = data.titre;
+            
+            // 3. Vérifier accès
+            if(!userData) {
+                // Pas inscrit
+                showPaywall("Connectez-vous pour acheter.");
+            } else {
+                checkPurchaseAndLoad(bookId);
+            }
+        };
 
-            verifierAchat();
-        }
-
-        // 2. Vérifier Achat & Écouteur Temps Réel
-        async function verifierAchat() {
-            // Chercher une transaction existante
-            const { data: transac } = await supabase
-                .from('transactions')
+        async function checkPurchaseAndLoad(bookId) {
+            // Cherche un achat validé
+            // NOTE: On utilise le mode 'text' pour l'ID car on a changé la table
+            const { data: achat } = await supabase
+                .from('achats')
                 .select('*')
-                .eq('user_id', userId)
-                .eq('book_id', bookId)
-                .single(); // Peut être null si pas encore acheté
+                .eq('user_id', userData.id)
+                .eq('document_id', bookId) // Supabase gère la conversion UUID/Text auto
+                .maybeSingle();
 
-            majInterface(transac);
+            document.getElementById('loading-screen').classList.add('hidden');
 
-            // Écouter les changements UNIQUEMENT pour cet utilisateur et ce livre
-            supabase.channel('custom-filter-channel')
-                .on(
-                    'postgres_changes', 
-                    { event: 'UPDATE', schema: 'public', table: 'transactions', filter: `user_id=eq.${userId}` }, 
-                    (payload) => {
-                        // Si l'update concerne ce livre, on met à jour
-                        if(payload.new.book_id == bookId) {
-                            majInterface(payload.new);
-                        }
-                    }
-                )
-                .subscribe();
-        }
-
-        function majInterface(transac) {
-            const div = document.getElementById('actions');
-            
-            // Cas 1: Pas de transaction => Bouton Payer
-            if (!transac) {
-                div.innerHTML = `<button class="btn btn-pay" onclick="document.getElementById('modal').style.display='block'">Débloquer (Payer)</button>`;
-            } 
-            // Cas 2: En attente
-            else if (transac.status === 'en_attente') {
-                div.innerHTML = `<p style="color:orange;">⏳ Paiement en cours de validation...</p>`;
-            } 
-            // Cas 3: Validé
-            else if (transac.status === 'valide') {
-                div.innerHTML = `
-                    <button class="btn btn-read" onclick="lire()">📖 Lire</button>
-                    <a href="${bookData.epub_url}" class="btn btn-down" download>📥 Télécharger</a>
-                `;
+            if (achat && achat.statut === 'valide') {
+                openReader(bookData.file_url);
+            } else {
+                showPaywall();
+                if(achat && achat.statut === 'en_attente') {
+                    const status = document.getElementById('payment-status');
+                    status.innerText = "⏳ Paiement en cours de validation...";
+                    status.classList.remove('hidden');
+                    document.getElementById('btn-declare').disabled = true;
+                    document.getElementById('btn-declare').innerText = "Attente validation...";
+                }
             }
         }
 
-        // 3. Envoyer Paiement
-        document.getElementById('form-pay').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const { error } = await supabase.from('transactions').insert({
-                user_id: userId,
-                book_id: bookId,
-                nom_payeur: document.getElementById('nom').value,
-                numero_payeur: document.getElementById('num').value,
-                transac_id: document.getElementById('tid').value,
-                status: 'en_attente'
-            });
-
-            if(!error) {
-                document.getElementById('modal').style.display = 'none';
-                alert("Envoyé !");
-                // On recharge manuellement l'état pour afficher "en attente" tout de suite
-                verifierAchat();
-            }
-        });
-
-        // 4. Lecteur
-        window.lire = function() {
-            if(!bookData.epub_url) return alert("Pas d'URL");
-            document.getElementById('viewer').style.display = 'block';
-            document.getElementById('viewer').innerHTML = "";
-            
-            const book = ePub(bookData.epub_url);
-            const rendition = book.renderTo("viewer", { width: "100%", height: "100%", flow: "scrolled-doc" });
-            rendition.display();
+        function showPaywall(msg) {
+            document.getElementById('loading-screen').classList.add('hidden');
+            document.getElementById('paywall').classList.remove('hidden');
+            if(msg) document.getElementById('payment-status').innerText = msg;
         }
 
-        init();
+        // --- Logique Paiement ---
+        window.startPayment = function() {
+            if(!userData) return window.location.href = 'inscription.html';
+            const telAdmin = "261349120726"; 
+            const msg = `Bonjour M. Rija, je souhaite acheter "${bookData.titre}". 500 Ar. Email: ${userData.email}`;
+            window.open(`https://wa.me/${telAdmin}?text=${encodeURIComponent(msg)}`, '_blank');
+        }
+
+        window.declarePayment = async function() {
+            if(!userData) return window.location.href = 'inscription.html';
+            if(!confirm("Avez-vous envoyé l'argent ?")) return;
+
+            const { error } = await supabase.from('achats').insert([{
+                user_id: userData.id,
+                document_id: bookData.id,
+                statut: 'en_attente'
+            }]);
+
+            if(error) alert("Erreur : " + error.message);
+            else { alert("Demande envoyée !"); location.reload(); }
+        }
+
+        // --- NOUVEAU : Logique Lecteur avec téléchargement préalable ---
+        async function openReader(url) {
+            document.getElementById('loading-text').innerText = "Téléchargement du livre...";
+            document.getElementById('loading-screen').classList.remove('hidden');
+
+            try {
+                // 1. On télécharge le fichier en binaire (Blob) pour éviter les erreurs URL
+                const response = await fetch(url);
+                if (!response.ok) throw new Error("Erreur réseau");
+                const arrayBuffer = await response.arrayBuffer();
+
+                // 2. On lance le lecteur avec les données binaires
+                document.getElementById('loading-screen').classList.add('hidden');
+                document.getElementById('reader-container').classList.remove('hidden');
+                document.getElementById('reader-controls').classList.remove('hidden');
+
+                window.book = ePub(arrayBuffer);
+                window.rendition = window.book.renderTo("viewer", {
+                    width: "100%",
+                    height: "100%",
+                    flow: "paginated"
+                });
+                window.rendition.display();
+
+            } catch (e) {
+                console.error(e);
+                document.getElementById('loading-screen').classList.add('hidden');
+                alert("Impossible d'ouvrir le livre. Assurez-vous d'avoir uploadé un fichier .epub valide dans l'admin.");
+            }
+        }
+        
+        window.changeFontSize = function(val) {
+            currentFontSize += val * 10;
+            if(window.rendition) window.rendition.themes.fontSize(currentFontSize + "%");
+        }
     </script>
 </body>
 </html>

@@ -3,221 +3,372 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cours - Accès Étudiant</title>
-    
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.5/jszip.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/epubjs/dist/epub.min.js"></script>
-
+    <title>Salle de Classe - SchoolAI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@700&family=Inter:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: sans-serif; padding: 20px; max-width: 800px; margin: auto; }
+        /* Styles spécifiques pour le contenu de cours */
+        .prose h1 { font-size: 1.8rem; font-weight: 800; color: #1e3a8a; margin-bottom: 1rem; }
+        .prose h2 { font-size: 1.4rem; font-weight: 700; color: #2563eb; margin-top: 1.5rem; margin-bottom: 0.8rem; }
+        .prose p { margin-bottom: 1rem; line-height: 1.6; color: #374151; }
+        .prose ul { list-style-type: disc; padding-left: 1.5rem; margin-bottom: 1rem; }
+        .prose strong { color: #111827; font-weight: 700; }
+        .prose blockquote { border-left: 4px solid #3b82f6; padding-left: 1rem; font-style: italic; background: #eff6ff; padding: 1rem; border-radius: 0 0.5rem 0.5rem 0; }
         
-        /* Styles des zones */
-        #zone-verrouillee { text-align: center; padding: 50px; background: #f4f4f4; border-radius: 8px; }
-        #zone-debloquee { display: none; text-align: center; } /* Caché par défaut */
-        
-        /* Styles des boutons */
-        .btn { padding: 10px 20px; border: none; cursor: pointer; font-size: 16px; border-radius: 5px; margin: 5px; }
-        .btn-pay { background: #e74c3c; color: white; }
-        .btn-download { background: #27ae60; color: white; text-decoration: none; display: inline-block; }
-        .btn-read { background: #3498db; color: white; }
-        
-        /* Modal */
-        #modal-paiement { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); }
-        .modal-content { background: white; width: 400px; margin: 100px auto; padding: 20px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
-        input { width: 100%; padding: 8px; margin: 5px 0 15px 0; box-sizing: border-box; }
-        
-        /* Lecteur EPUB */
-        #viewer-container { width: 100%; height: 600px; border: 1px solid #ddd; margin-top: 20px; display: none; background: #fff; }
+        .animate-fade-in { animation: fadeIn 0.5s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-fade-in-up { animation: fadeInUp 0.3s ease-out; } 
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
-<body>
+<body class="bg-slate-50 font-sans text-slate-800 h-screen flex overflow-hidden">
 
-    <h1>Mon Cours de Management</h1>
-
-    <div id="zone-verrouillee">
-        <h3>🔒 Contenu bloqué</h3>
-        <p>Pour accéder au cours et au livre, veuillez effectuer le paiement.</p>
-        <button class="btn btn-pay" onclick="ouvrirModal()">J'ai effectué le payement</button>
-        <p id="msg-attente" style="color: orange; display:none;">⏳ Votre paiement est en cours de vérification...</p>
-    </div>
-
-    <div id="zone-debloquee">
-        <h3>✅ Accès validé !</h3>
-        <p>Merci pour votre achat. Voici vos accès :</p>
-        
-        <div style="margin-bottom: 20px;">
-            <a id="lien-download" href="#" class="btn btn-download" download>
-                📥 Télécharger le fichier (.epub)
+    <aside class="w-80 bg-white border-r border-gray-100 flex flex-col hidden md:flex z-20 shadow-xl">
+        <div class="p-6 border-b border-gray-50">
+            <a href="index.html" class="flex items-center gap-2 hover:opacity-80 transition">
+                <i class="fas fa-graduation-cap text-blue-600 text-2xl"></i>
+                <span class="font-black text-xl text-blue-900">School<span class="text-blue-600">AI</span></span>
             </a>
+        </div>
+        
+        <div class="p-4 bg-gray-50/50">
+            <div class="relative">
+                <i class="fas fa-search absolute left-3 top-3 text-gray-400 text-sm"></i>
+                <input type="text" id="search-lesson" placeholder="Rechercher un cours..." 
+                       class="w-full pl-9 pr-4 py-3 bg-white border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 ring-blue-500 transition shadow-sm"
+                       onkeyup="filterSidebar()">
+            </div>
+        </div>
 
-            <button class="btn btn-read" onclick="lireLivre()">
-                📖 Lire maintenant
+        <div class="flex-1 overflow-y-auto px-3 py-2 space-y-1" id="lesson-list">
+            <div class="text-center py-10 text-gray-400 text-sm animate-pulse">
+                <i class="fas fa-circle-notch fa-spin mb-2 text-2xl"></i><br>Chargement des cours...
+            </div>
+        </div>
+    </aside>
+
+    <main class="flex-1 flex flex-col relative w-full">
+        
+        <header class="bg-white/90 backdrop-blur-md border-b border-gray-100 p-4 flex justify-between items-center sticky top-0 z-10 shadow-sm">
+            <div class="flex items-center gap-3">
+                <button class="md:hidden text-gray-500 text-xl p-2 hover:bg-gray-100 rounded-lg" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+                <h2 class="font-bold text-slate-700 hidden sm:block">Catalogue des cours</h2>
+            </div>
+            
+            <div class="flex items-center gap-3">
+                <a href="biblio.html" class="bg-purple-50 text-purple-700 border border-purple-200 px-4 py-2 rounded-lg font-bold text-sm hover:bg-purple-100 transition flex items-center gap-2 shadow-sm">
+                    <i class="fas fa-book-reader"></i> <span class="hidden sm:inline">Bibliothèque</span>
+                </a>
+                <a href="index.html" class="bg-gray-50 text-gray-600 border border-gray-200 px-4 py-2 rounded-lg font-bold text-sm hover:bg-gray-100 transition shadow-sm"><i class="fas fa-home"></i></a>
+            </div>
+        </header>
+
+        <div id="content-area" class="flex-1 overflow-y-auto p-4 md:p-8 scroll-smooth bg-slate-50">
+            
+            <div id="welcome-screen" class="max-w-3xl mx-auto text-center py-12 md:py-24 animate-fade-in">
+                <div class="inline-block p-6 rounded-full bg-white shadow-xl mb-8 transform hover:scale-105 transition duration-500">
+                    <span class="text-6xl">🎓</span>
+                </div>
+                <h1 class="text-3xl md:text-5xl font-black text-slate-800 mb-6 tracking-tight">Bienvenue en classe !</h1>
+                <p class="text-lg md:text-xl text-slate-500 mb-10 max-w-xl mx-auto leading-relaxed">
+                    Tout le contenu est accessible gratuitement. Sélectionnez une leçon dans le menu à gauche pour commencer.
+                </p>
+                <button onclick="document.querySelector('aside').classList.remove('hidden')" class="md:hidden w-full py-4 bg-blue-600 text-white rounded-xl font-bold shadow-lg shadow-blue-200 mb-4 animate-bounce">
+                    📂 Ouvrir la liste des cours
+                </button>
+            </div>
+
+            <div id="lesson-content" class="hidden max-w-4xl mx-auto pb-32">
+                <div id="loading" class="hidden text-center py-20"><i class="fas fa-circle-notch fa-spin text-4xl text-blue-500"></i></div>
+                
+                <div class="mb-8">
+                    <div class="flex items-center gap-2 mb-3">
+                        <span id="lesson-niveau" class="text-[10px] font-black uppercase tracking-widest bg-slate-800 text-white px-2 py-1 rounded">Niveau</span>
+                        <span id="lesson-matiere" class="text-[10px] font-black uppercase tracking-widest bg-blue-100 text-blue-700 px-2 py-1 rounded">Matière</span>
+                    </div>
+                    <h1 id="lesson-title" class="text-3xl md:text-5xl font-black text-slate-900 leading-tight">Titre...</h1>
+                    
+                    <div id="audio-player-container" class="hidden mt-6 bg-orange-50 p-4 rounded-xl border border-orange-200 flex items-center gap-4 shadow-sm">
+                        <div class="w-12 h-12 bg-orange-500 rounded-full flex items-center justify-center text-white shrink-0 text-xl shadow"><i class="fas fa-headphones-alt"></i></div>
+                        <div class="flex-1">
+                            <p class="text-xs font-bold text-orange-800 uppercase mb-1">Version Audio</p>
+                            <audio id="audio-player" controls class="w-full h-8 accent-orange-500"></audio>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="lesson-body" class="prose max-w-none bg-white p-6 md:p-10 rounded-3xl shadow-sm border border-gray-100"></div>
+
+                <div id="quiz-section" class="mt-12 hidden">
+                    <div class="bg-indigo-900 text-white p-6 md:p-8 rounded-3xl shadow-xl relative overflow-hidden">
+                        <div class="absolute top-0 right-0 p-8 opacity-10 text-9xl"><i class="fas fa-question-circle"></i></div>
+                        <h2 class="text-2xl font-bold mb-6 flex items-center gap-3 relative z-10"><i class="fas fa-check-circle text-green-400"></i> Quiz de validation</h2>
+                        <div id="quiz-container" class="space-y-4 relative z-10 text-slate-800"></div>
+                        <button onclick="checkQuiz()" class="mt-8 px-8 py-3 bg-green-500 hover:bg-green-600 text-white font-bold rounded-xl shadow-lg transition w-full md:w-auto relative z-10 transform hover:scale-105">
+                            Vérifier mes réponses
+                        </button>
+                        <div id="quiz-result" class="mt-6 font-bold text-center text-xl hidden bg-white/20 p-4 rounded-xl backdrop-blur relative z-10"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="fixed bottom-6 right-6 z-40 flex flex-col items-end">
+            <div id="chat-window" class="hidden bg-white w-80 md:w-96 h-[500px] rounded-2xl shadow-2xl border border-gray-200 flex flex-col mb-4 overflow-hidden animate-fade-in-up">
+                <div class="bg-blue-600 p-4 text-white flex justify-between items-center shrink-0 shadow-md">
+                    <div class="font-bold flex items-center gap-2"><i class="fas fa-robot"></i> Assistant Prof</div>
+                    <button onclick="toggleChat()" class="hover:bg-blue-700 p-1 rounded transition"><i class="fas fa-times"></i></button>
+                </div>
+                <div id="chatbox" class="flex-1 overflow-y-auto p-4 bg-slate-50 text-sm space-y-4">
+                    <div class="text-left"><span class="bg-white border border-gray-200 text-slate-700 px-4 py-3 rounded-tr-xl rounded-br-xl rounded-bl-xl shadow-sm inline-block">Bonjour ! Je lis le cours avec toi. Pose-moi une question si tu bloques ! 👋</span></div>
+                </div>
+                <div class="p-3 bg-white border-t flex gap-2">
+                    <input type="text" id="chat-input" placeholder="Je n'ai pas compris..." class="flex-1 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 ring-blue-500 transition" onkeypress="if(event.key==='Enter') sendMessage()">
+                    <button onclick="sendMessage()" class="bg-blue-600 text-white w-10 h-10 rounded-lg hover:bg-blue-700 transition flex items-center justify-center shadow-md"><i class="fas fa-paper-plane"></i></button>
+                </div>
+            </div>
+            <button onclick="toggleChat()" class="w-16 h-16 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-xl flex items-center justify-center text-2xl transition transform hover:scale-110 border-4 border-white">
+                <i class="fas fa-comment-dots"></i>
             </button>
         </div>
 
-        <div id="viewer-container">
-            <div id="viewer"></div>
-        </div>
-    </div>
-
-    <div id="modal-paiement">
-        <div class="modal-content">
-            <h3>Confirmation de Paiement</h3>
-            <div style="background: #f0f8ff; padding: 10px; margin-bottom: 10px; border-left: 4px solid #3498db;">
-                <p style="margin:0;">Faire le payement au :</p>
-                <p style="margin:0; font-weight:bold; color:#c0392b;">034 91 207 26 (Ndrato)</p>
-            </div>
-            <form id="form-paiement">
-                <label>Nom du payeur :</label>
-                <input type="text" id="nomPayeur" required>
-                
-                <label>Numéro du payeur :</label>
-                <input type="text" id="numeroPayeur" required>
-                
-                <label>N° Transaction ID :</label>
-                <input type="text" id="transacId" required>
-
-                <button type="submit" class="btn btn-pay">Envoyer la preuve</button>
-                <button type="button" class="btn" onclick="fermerModal()">Annuler</button>
-            </form>
-        </div>
-    </div>
+    </main>
 
     <script type="module">
-        // ---------------------------------------------------------
-        // 1. CONFIGURATION FIREBASE (Remplace par tes clés !)
-        // ---------------------------------------------------------
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, doc, setDoc, onSnapshot, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { GoogleGenerativeAI } from "https://esm.run/@google/generative-ai";
+        import { createClient } from "https://esm.run/@supabase/supabase-js";
 
-        const firebaseConfig = {
-            apiKey: "TA_CLE_API",
-            authDomain: "TON_PROJET.firebaseapp.com",
-            projectId: "TON_PROJET_ID",
-            storageBucket: "TON_PROJET.appspot.com",
-            messagingSenderId: "...",
-            appId: "..."
+        // CONFIGURATION (Clés identiques à l'Admin)
+        const API_KEY_GEMINI = "TOKEN_REMPLACEMENT_ICI";
+        const SUPABASE_URL = "https://jdxdthxztokjhprwynyf.supabase.co";
+        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpkeGR0aHh6dG9ramhwcnd5bnlmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcxODAyNzgsImV4cCI6MjA4Mjc1NjI3OH0.zal-p0RKJ-PYGvzal1K9-asbUbyQmqG5OtPTWnoHQmI";
+
+        const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+        const genAI = new GoogleGenerativeAI(API_KEY_GEMINI);
+
+        let allLessons = [];
+        let currentLessonData = null; // Stocke le cours actif pour le contexte de l'IA
+
+        window.onload = async function() {
+            // 1. Charger UNIQUEMENT les cours (pas les livres EPUB)
+            const { data: lessonsData, error } = await supabase
+                .from('lessons')
+                .select('*')
+                .neq('type_contenu', 'livre_bibliotheque') // On exclut les livres
+                .order('id', { ascending: false });
+            
+            if(lessonsData) {
+                allLessons = lessonsData;
+                const urlParams = new URLSearchParams(window.location.search);
+                const filterParam = urlParams.get('filter'); // ex: "Primaire"
+
+                if (filterParam) {
+                    document.getElementById('search-lesson').value = filterParam;
+                    // Filtre large
+                    const filtered = allLessons.filter(l => 
+                        (l.niveau && l.niveau.includes(filterParam)) || 
+                        (l.matiere && l.matiere.includes(filterParam))
+                    );
+                    renderSidebar(filtered);
+                } else {
+                    renderSidebar(allLessons);
+                }
+            } else {
+                document.getElementById('lesson-list').innerHTML = '<p class="text-center text-gray-400 text-sm mt-4">Aucun cours disponible.</p>';
+            }
         };
 
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-
-        // ID de l'utilisateur (Pour l'exemple on met un ID fixe, mais ça devrait venir de l'authentification)
-        const userId = "user_demo_123"; 
-        // ID du produit acheté
-        const productId = "cours_management_pdf";
-
-        let livreUrl = ""; // On stockera l'URL ici une fois récupérée
-
-        // ---------------------------------------------------------
-        // 2. ÉCOUTE EN TEMPS RÉEL (C'est ici que la magie opère)
-        // ---------------------------------------------------------
-        const transactionRef = doc(db, "transactions", userId + "_" + productId);
-
-        // Cette fonction s'exécute AUTOMATIQUEMENT quand tu modifies la base de données
-        onSnapshot(transactionRef, (docSnap) => {
-            if (docSnap.exists()) {
-                const data = docSnap.data();
+        // GESTION SIDEBAR
+        window.renderSidebar = function(lessons) {
+            const list = document.getElementById('lesson-list');
+            list.innerHTML = '';
+            if(lessons.length === 0) { list.innerHTML = '<p class="text-gray-400 text-sm p-4 text-center">Aucun résultat.</p>'; return; }
+            
+            lessons.forEach(l => {
+                let colorClass = "bg-gray-100 text-gray-600";
+                if(l.niveau && l.niveau.includes("Primaire")) colorClass = "bg-orange-100 text-orange-600";
+                if(l.niveau && l.niveau.includes("Collège")) colorClass = "bg-blue-100 text-blue-600";
+                if(l.niveau && l.niveau.includes("Lycée")) colorClass = "bg-purple-100 text-purple-600";
                 
-                if (data.status === "en_attente") {
-                    document.getElementById('msg-attente').style.display = 'block';
-                    document.getElementById('msg-attente').innerText = "⏳ Preuve envoyée. En attente de validation par l'admin...";
-                }
-                else if (data.status === "valide") {
-                    // C'est ici qu'on débloque tout !
-                    console.log("Paiement validé !");
-                    
-                    // 1. On stocke l'URL du fichier qui vient de la DB (admin)
-                    livreUrl = data.fileUrl; 
+                list.innerHTML += `
+                    <div onclick="fetchAndDisplayLesson(${l.id})" class="group p-3 mx-2 rounded-xl hover:bg-blue-50 cursor-pointer transition border border-transparent hover:border-blue-100 mb-1">
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="text-[10px] font-bold uppercase tracking-wider ${colorClass} px-1.5 py-0.5 rounded">${l.niveau || '?'}</span>
+                            <span class="text-[10px] text-gray-400 font-bold">${l.matiere || 'Général'}</span>
+                        </div>
+                        <div class="font-bold text-sm text-slate-700 leading-tight group-hover:text-blue-700 line-clamp-2">${l.titre}</div>
+                    </div>
+                `;
+            });
+        }
 
-                    // 2. On met à jour l'interface
-                    document.getElementById('zone-verrouillee').style.display = 'none';
-                    document.getElementById('zone-debloquee').style.display = 'block';
+        window.filterSidebar = function() {
+            const query = document.getElementById('search-lesson').value.toLowerCase();
+            const filtered = allLessons.filter(l => 
+                (l.titre && l.titre.toLowerCase().includes(query)) || 
+                (l.matiere && l.matiere.toLowerCase().includes(query)) || 
+                (l.niveau && l.niveau.toLowerCase().includes(query))
+            );
+            renderSidebar(filtered);
+        }
 
-                    // 3. On met à jour le bouton de téléchargement
-                    const btnDownload = document.getElementById('lien-download');
-                    if(livreUrl) {
-                        btnDownload.href = livreUrl;
-                    } else {
-                        btnDownload.style.display = 'none'; // Pas de lien, on cache
-                    }
-                }
-            }
-        });
+        window.toggleSidebar = function() { document.querySelector('aside').classList.toggle('hidden'); }
 
-        // ---------------------------------------------------------
-        // 3. GESTION DU FORMULAIRE (Envoi preuve)
-        // ---------------------------------------------------------
-        document.getElementById('form-paiement').addEventListener('submit', async (e) => {
-            e.preventDefault();
+        // AFFICHAGE DU COURS
+        window.fetchAndDisplayLesson = async function(id) {
+            // UI Reset
+            document.getElementById('welcome-screen').classList.add('hidden');
+            document.getElementById('lesson-content').classList.remove('hidden');
+            document.getElementById('loading').classList.remove('hidden');
+            document.getElementById('lesson-body').innerHTML = '';
+            document.getElementById('quiz-section').classList.add('hidden');
             
-            const nom = document.getElementById('nomPayeur').value;
-            const numero = document.getElementById('numeroPayeur').value;
-            const ref = document.getElementById('transacId').value;
+            // Fermer sidebar sur mobile
+            if(window.innerWidth < 768) document.querySelector('aside').classList.add('hidden');
 
-            try {
-                // On écrit dans la base de données
-                await setDoc(transactionRef, {
-                    userId: userId,
-                    nom: nom,
-                    numero: numero,
-                    transactionId: ref,
-                    status: "en_attente",
-                    date: new Date(),
-                    // IMPORTANT: Au début fileUrl est vide, l'admin devra le remplir ou tu le mets par défaut si c'est le même pour tout le monde
-                    fileUrl: "https://ton-site.com/fichiers/mon-livre.epub" 
-                }, { merge: true });
+            // Récupérer données complètes
+            const { data, error } = await supabase.from('lessons').select('*').eq('id', id).single();
+            
+            document.getElementById('loading').classList.add('hidden');
+            if (error || !data) return alert("Erreur chargement cours");
 
-                alert("Merci ! Votre preuve a été envoyée.");
-                fermerModal();
-            } catch (error) {
-                console.error("Erreur : ", error);
-                alert("Erreur lors de l'envoi.");
+            // Sauvegarder pour l'IA
+            currentLessonData = data;
+
+            // Incrémenter vues (RPC call si dispo, sinon ignoré)
+            try { await supabase.rpc('increment_views', { row_id: id }); } catch(e) {}
+
+            // Remplir les champs
+            document.getElementById('lesson-niveau').innerText = data.niveau || 'Niveau';
+            document.getElementById('lesson-matiere').innerText = data.matiere || 'Matière';
+            document.getElementById('lesson-title').innerText = data.titre;
+            
+            // Gestion Contenu HTML
+            if (data.contenu_html) {
+                 // Si c'est un objet JSON (ancien format), on extrait, sinon c'est du string HTML
+                let content = typeof data.contenu_html === 'object' ? JSON.stringify(data.contenu_html) : data.contenu_html;
+                document.getElementById('lesson-body').innerHTML = content;
+            } else {
+                document.getElementById('lesson-body').innerHTML = "<p>Contenu en cours de rédaction...</p>";
             }
-        });
 
-        // ---------------------------------------------------------
-        // 4. FONCTIONS UTILITAIRES (Modal + Lecteur)
-        // ---------------------------------------------------------
+            // Gestion Audio
+            const audioDiv = document.getElementById('audio-player-container');
+            if(data.audio_url) {
+                audioDiv.classList.remove('hidden');
+                document.getElementById('audio-player').src = data.audio_url;
+            } else {
+                audioDiv.classList.add('hidden');
+            }
+
+            // Gestion Quiz
+            if(data.quiz && Array.isArray(data.quiz) && data.quiz.length > 0) {
+                renderQuiz(data.quiz);
+            }
+        }
+
+        function renderQuiz(quizData) {
+            const container = document.getElementById('quiz-container');
+            container.innerHTML = '';
+            document.getElementById('quiz-section').classList.remove('hidden');
+            document.getElementById('quiz-result').classList.add('hidden');
+            
+            quizData.forEach((q, index) => {
+                let optionsHtml = q.options.map((opt, i) => `
+                    <label class="flex items-center gap-3 p-4 bg-white rounded-xl cursor-pointer hover:bg-indigo-50 transition border border-gray-100">
+                        <input type="radio" name="q${index}" value="${i}" class="w-5 h-5 text-indigo-600 accent-indigo-600">
+                        <span class="font-medium">${opt}</span>
+                    </label>
+                `).join('');
+                
+                container.innerHTML += `
+                    <div class="bg-gray-50 p-6 rounded-2xl question-block border border-gray-100" data-correct="${q.correct}">
+                        <p class="font-bold text-lg mb-4 text-slate-800"><span class="text-indigo-500 mr-2">Q${index + 1}.</span>${q.question}</p>
+                        <div class="space-y-2 flex flex-col">${optionsHtml}</div>
+                    </div>
+                `;
+            });
+        }
+
+        window.checkQuiz = function() {
+            let score = 0; 
+            const blocks = document.querySelectorAll('.question-block');
+            blocks.forEach((block, index) => {
+                const correctIndex = parseInt(block.dataset.correct);
+                const selected = block.querySelector(`input[name="q${index}"]:checked`);
+                
+                // Reset styles
+                block.classList.remove('ring-2', 'ring-green-500', 'ring-red-500', 'bg-green-50', 'bg-red-50');
+                
+                if(selected && parseInt(selected.value) === correctIndex) { 
+                    score++; 
+                    block.classList.add('ring-2', 'ring-green-500', 'bg-green-50'); 
+                } else { 
+                    block.classList.add('ring-2', 'ring-red-500', 'bg-red-50'); 
+                }
+            });
+            const resultDiv = document.getElementById('quiz-result'); 
+            resultDiv.classList.remove('hidden'); 
+            resultDiv.innerText = `Ton score : ${score} / ${blocks.length}`;
+            if(score === blocks.length) resultDiv.innerText += " 🎉 Excellent !";
+        }
+
+        // --- CHATBOT INTELLIGENT ---
+        window.toggleChat = function() { document.getElementById('chat-window').classList.toggle('hidden'); }
         
-        // Exposer les fonctions au HTML global (window)
-        window.ouvrirModal = function() {
-            document.getElementById('modal-paiement').style.display = 'block';
-        }
+        window.sendMessage = async function() {
+            const input = document.getElementById('chat-input'); 
+            const msg = input.value; 
+            if (!msg) return;
 
-        window.fermerModal = function() {
-            document.getElementById('modal-paiement').style.display = 'none';
-        }
+            const box = document.getElementById('chatbox'); 
+            // Message User
+            box.innerHTML += `<div class="text-right mb-4 animate-fade-in-up"><span class="bg-blue-600 text-white px-4 py-2 rounded-xl rounded-tr-none inline-block shadow text-sm">${msg}</span></div>`;
+            input.value = ''; 
+            box.scrollTop = box.scrollHeight; 
 
-        window.lireLivre = function() {
-            // CORRECTION DE L'ERREUR ICI
-            if (!livreUrl || livreUrl === "") {
-                alert("Impossible d'ouvrir le livre. L'URL est vide. Contactez l'admin.");
-                return;
-            }
+            // Loading
+            const loadId = 'load'+Date.now();
+            box.innerHTML += `<div id="${loadId}" class="text-left mb-4"><span class="text-gray-400 text-xs italic">L'assistant réfléchit...</span></div>`;
 
-            const viewerContainer = document.getElementById('viewer-container');
-            const viewerDiv = document.getElementById('viewer');
-            
-            // Afficher le conteneur
-            viewerContainer.style.display = 'block';
-            viewerDiv.innerHTML = ""; // Vider si déjà ouvert
-
-            // Initialiser ePub.js
             try {
-                var book = ePub(livreUrl);
-                var rendition = book.renderTo("viewer", {
-                    width: "100%",
-                    height: "100%",
-                    flow: "scrolled-doc" // ou "paginated"
-                });
-                rendition.display();
-            } catch (e) {
+                // Construction du Contexte (Le "Prompt System")
+                let contextPrompt = `Tu es un tuteur pédagogique bienveillant pour des élèves de Madagascar.`;
+                
+                if(currentLessonData) {
+                    // On nettoie le HTML pour économiser des tokens et ne garder que le texte
+                    const textContent = currentLessonData.contenu_html ? currentLessonData.contenu_html.replace(/<[^>]*>?/gm, '') : "Pas de contenu texte.";
+                    
+                    contextPrompt += `
+                    L'élève est en train de lire le cours : "${currentLessonData.titre}" (Matière: ${currentLessonData.matiere}, Niveau: ${currentLessonData.niveau}).
+                    Voici le contenu du cours qu'il regarde :
+                    """
+                    ${textContent.substring(0, 2000)}... (extrait)
+                    """
+                    Réponds à sa question en utilisant UNIQUEMENT les informations de ce cours si possible. Si la réponse n'y est pas, utilise tes connaissances générales mais précise que ce n'est pas dans le cours. Sois encourageant.
+                    `;
+                } else {
+                    contextPrompt += `L'élève est sur la page d'accueil et n'a pas encore ouvert de leçon. Guide-le pour choisir un cours.`;
+                }
+
+                const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+                const result = await model.generateContent([contextPrompt, msg]);
+                const response = result.response.text();
+
+                document.getElementById(loadId).remove();
+                
+                // Message Bot
+                box.innerHTML += `<div class="text-left mb-4 animate-fade-in-up"><span class="bg-white border border-gray-200 text-slate-700 px-4 py-2 rounded-xl rounded-tl-none inline-block shadow-sm text-sm leading-relaxed">${response}</span></div>`;
+                box.scrollTop = box.scrollHeight;
+
+            } catch (e) { 
                 console.error(e);
-                alert("Erreur lors du chargement du fichier EPUB.");
+                document.getElementById(loadId).innerHTML="<span class='text-red-400 text-xs'>Erreur de connexion IA.</span>"; 
             }
         }
     </script>
-
 </body>
+
 </html>
