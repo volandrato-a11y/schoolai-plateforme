@@ -2,110 +2,95 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Admin Dashboard</title>
+    <title>Admin Supabase</title>
     <style>
-        body { font-family: sans-serif; padding: 20px; display: flex; gap: 20px; }
+        body { font-family: sans-serif; display: flex; gap: 20px; padding: 20px; }
         .panel { flex: 1; padding: 20px; border: 1px solid #ccc; border-radius: 8px; }
-        h2 { border-bottom: 2px solid #333; padding-bottom: 10px; }
-        input, textarea, select { width: 100%; margin-bottom: 10px; padding: 8px; box-sizing: border-box; }
-        button { background: #333; color: white; padding: 10px; cursor: pointer; border: none; }
-        .transaction-item { background: #f9f9f9; border-left: 4px solid orange; padding: 10px; margin-bottom: 10px; }
-        .transaction-item.valide { border-left-color: green; opacity: 0.6; }
+        input, textarea, select { width: 100%; margin-bottom: 10px; padding: 5px; }
+        .item { padding: 10px; background: #f4f4f4; margin-bottom: 5px; border-left: 5px solid orange; }
+        .valide { border-left-color: green; opacity: 0.6; }
     </style>
 </head>
 <body>
 
-    <div class="panel">
-        <h2>📚 Ajouter / Modifier un Livre</h2>
-        <form id="form-livre">
-            <label>Titre du livre</label>
-            <input type="text" id="titre" required placeholder="Ex: Management 101">
+<div class="panel">
+    <h2>📚 Ajouter un Livre</h2>
+    <form id="form-livre">
+        <input type="text" id="titre" placeholder="Titre" required>
+        <textarea id="resume" placeholder="Résumé"></textarea>
+        <input type="text" id="coverUrl" placeholder="URL Image Cover" required>
+        <input type="text" id="epubUrl" placeholder="URL Fichier EPUB" required>
+        <textarea id="jsonData" placeholder='JSON: {"auteur": "Moi"}'></textarea>
+        <select id="statut">
+            <option value="publie">Publié</option>
+            <option value="gele">Gelé</option>
+        </select>
+        <button type="submit">Ajouter</button>
+    </form>
+</div>
 
-            <label>Résumé</label>
-            <textarea id="resume" rows="3" placeholder="Description courte..."></textarea>
+<div class="panel">
+    <h2>💰 Paiements (Temps Réel)</h2>
+    <div id="liste-paiements">Chargement...</div>
+</div>
 
-            <label>URL de la Cover (Image)</label>
-            <input type="url" id="coverUrl" placeholder="https://..." required>
+<script type="module">
+    import { supabase } from './supabase-config.js';
 
-            <label>URL du fichier EPUB</label>
-            <input type="url" id="epubUrl" placeholder="https://..." required>
-
-            <label>Données JSON (Optionnel)</label>
-            <textarea id="jsonData" rows="5" placeholder='{"chapitres": 12, "auteur": "Moi"}'></textarea>
-
-            <label>Statut</label>
-            <select id="statut">
-                <option value="publie">Publié (Visible)</option>
-                <option value="gele">Gelé (Caché)</option>
-            </select>
-
-            <button type="submit">Enregistrer le Livre</button>
-        </form>
-    </div>
-
-    <div class="panel">
-        <h2>💰 Paiements en attente</h2>
-        <div id="liste-paiements">
-            </div>
-    </div>
-
-    <script type="module">
-        import { db } from "./firebase-config.js";
-        import { collection, addDoc, onSnapshot, doc, updateDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-        // 1. AJOUTER UN LIVRE
-        document.getElementById('form-livre').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const data = {
-                titre: document.getElementById('titre').value,
-                resume: document.getElementById('resume').value,
-                coverUrl: document.getElementById('coverUrl').value,
-                epubUrl: document.getElementById('epubUrl').value,
-                jsonData: document.getElementById('jsonData').value, // Zone JSON
-                statut: document.getElementById('statut').value,     // Publié ou Gelé
-                dateCreation: new Date()
-            };
-
-            try {
-                await addDoc(collection(db, "livres"), data);
-                alert("Livre ajouté avec succès !");
-                e.target.reset();
-            } catch (err) { alert("Erreur: " + err.message); }
+    // --- 1. AJOUTER LIVRE ---
+    document.getElementById('form-livre').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const { error } = await supabase.from('livres').insert({
+            titre: document.getElementById('titre').value,
+            resume: document.getElementById('resume').value,
+            cover_url: document.getElementById('coverUrl').value,
+            epub_url: document.getElementById('epubUrl').value,
+            json_data: JSON.parse(document.getElementById('jsonData').value || '{}'),
+            statut: document.getElementById('statut').value
         });
 
-        // 2. GESTION DES PAIEMENTS (TEMPS RÉEL)
-        const q = query(collection(db, "transactions"), orderBy("date", "desc"));
+        if (error) alert("Erreur: " + error.message);
+        else { alert("Livre ajouté !"); e.target.reset(); }
+    });
+
+    // --- 2. LISTE & VALIDATION ---
+    async function fetchTransactions() {
+        const { data } = await supabase
+            .from('transactions')
+            .select('*')
+            .order('created_at', { ascending: false });
         
-        onSnapshot(q, (snapshot) => {
-            const container = document.getElementById('liste-paiements');
-            container.innerHTML = "";
+        renderList(data);
+    }
 
-            snapshot.forEach((snap) => {
-                const t = snap.data();
-                const div = document.createElement('div');
-                div.className = `transaction-item ${t.status}`;
-                
-                let actionBtn = "";
-                if(t.status === "en_attente") {
-                    actionBtn = `<button style="background:green; margin-top:5px;" onclick="validerPaiement('${snap.id}')">Valider l'accès</button>`;
-                } else {
-                    actionBtn = "<span>✅ Validé</span>";
-                }
-
-                div.innerHTML = `
-                    <strong>${t.nom}</strong> (${t.numero})<br>
-                    Ref: ${t.transactionId}<br>
-                    Livre ID: <small>${t.bookId}</small><br>
-                    ${actionBtn}
-                `;
-                container.appendChild(div);
-            });
+    function renderList(data) {
+        const container = document.getElementById('liste-paiements');
+        container.innerHTML = "";
+        data.forEach(t => {
+            const div = document.createElement('div');
+            div.className = `item ${t.status}`;
+            div.innerHTML = `
+                <strong>${t.nom_payeur}</strong> (${t.numero_payeur})<br>
+                Ref: ${t.transac_id} | Livre ID: ${t.book_id}<br>
+                ${t.status === 'en_attente' ? `<button onclick="valider(${t.id})">Valider</button>` : '✅ OK'}
+            `;
+            container.appendChild(div);
         });
+    }
 
-        // Fonction globale pour le bouton HTML
-        window.validerPaiement = async (id) => {
-            await updateDoc(doc(db, "transactions", id), { status: "valide" });
-        };
-    </script>
+    // Fonction globale pour valider
+    window.valider = async (id) => {
+        await supabase.from('transactions').update({ status: 'valide' }).eq('id', id);
+    };
+
+    // ÉCOUTEUR TEMPS RÉEL (Update auto de l'admin)
+    supabase.channel('admin-chan')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'transactions' }, () => {
+            fetchTransactions(); // Recharger la liste si changement
+        })
+        .subscribe();
+
+    fetchTransactions();
+</script>
 </body>
 </html>
