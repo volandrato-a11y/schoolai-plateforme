@@ -35,28 +35,40 @@
             <p id="loading-text" class="text-sm text-gray-500">Vérification des droits...</p>
         </div>
 
-        <div id="paywall" class="hidden absolute inset-0 z-40 bg-white flex flex-col items-center justify-center p-8 text-center overflow-y-auto">
-            <div class="max-w-md w-full">
-                <div class="w-20 h-20 bg-yellow-100 text-yellow-600 rounded-full flex items-center justify-center mx-auto mb-6 text-3xl">
-                    <i class="fas fa-lock"></i>
-                </div>
-                <h2 class="text-2xl font-black text-slate-800 mb-2">Lecture verrouillée</h2>
-                <p class="text-gray-500 mb-6">Ce livre est disponible pour seulement <span class="font-bold text-slate-800">500 Ar</span>.</p>
+        <div id="paywall" class="hidden absolute inset-0 z-40 bg-white flex flex-col items-center justify-center p-4 text-center overflow-y-auto">
+            <div class="max-w-2xl w-full grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
                 
-                <div class="bg-purple-50 p-4 rounded-xl border border-purple-100 mb-6 text-left">
-                    <h3 class="font-bold text-purple-800 text-sm uppercase mb-2">Résumé</h3>
-                    <p id="book-summary" class="text-sm text-gray-600 italic">Un excellent livre à découvrir.</p>
+                <div class="bg-gray-50 p-6 rounded-2xl border border-gray-200">
+                    <div class="w-12 h-12 bg-gray-200 text-gray-600 rounded-full flex items-center justify-center mx-auto mb-4 text-xl">
+                        <i class="fas fa-book"></i>
+                    </div>
+                    <h2 class="text-lg font-bold text-slate-800 mb-1">Juste ce livre</h2>
+                    <p class="text-gray-500 text-sm mb-4">Accès à vie à ce document.</p>
+                    <div class="text-2xl font-black text-slate-800 mb-4">500 Ar</div>
+                    <button onclick="startPayment('unit')" class="w-full bg-white border border-gray-300 hover:bg-gray-50 text-slate-700 font-bold py-3 rounded-xl transition text-sm">
+                        Acheter ce livre
+                    </button>
                 </div>
 
-                <div class="space-y-3">
-                    <button onclick="startPayment()" class="w-full bg-[#25D366] hover:bg-[#20b858] text-white font-bold py-3 rounded-xl shadow-lg flex justify-center items-center gap-2 transition transform hover:scale-[1.01]">
-                        <i class="fab fa-whatsapp text-xl"></i> Acheter via WhatsApp
-                    </button>
-                    <button onclick="declarePayment()" id="btn-declare" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-3 rounded-xl border border-slate-200 transition text-sm">
-                        J'ai déjà payé, vérifier mon accès
+                <div class="bg-purple-50 p-6 rounded-2xl border-2 border-purple-400 relative shadow-xl transform md:scale-105">
+                    <div class="absolute top-0 right-0 bg-yellow-400 text-yellow-900 text-[10px] font-bold px-2 py-1 rounded-bl-lg uppercase tracking-wide">Recommandé</div>
+                    <div class="w-12 h-12 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center mx-auto mb-4 text-xl">
+                        <i class="fas fa-crown"></i>
+                    </div>
+                    <h2 class="text-lg font-bold text-purple-900 mb-1">Tout débloquer</h2>
+                    <p class="text-purple-700 text-sm mb-4">Accès illimité à toute la bibliothèque.</p>
+                    <div class="text-2xl font-black text-purple-900 mb-4">10.000 Ar <span class="text-sm font-normal text-purple-600">/mois</span></div>
+                    <button onclick="startPayment('sub')" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 rounded-xl shadow-lg transition text-sm animate-bounce">
+                        Devenir Premium
                     </button>
                 </div>
-                
+            </div>
+
+            <div class="mt-8 max-w-md w-full">
+                <p class="text-xs text-gray-400 mb-2">Déjà payé ?</p>
+                <button onclick="declarePayment()" id="btn-declare" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-3 rounded-xl border border-slate-200 transition text-sm">
+                    J'ai envoyé l'argent, vérifier mon accès
+                </button>
                 <p id="payment-status" class="mt-4 text-xs font-bold text-orange-500 hidden"></p>
             </div>
         </div>
@@ -81,6 +93,7 @@
         let currentFontSize = 100;
         let bookData = null;
         let userData = null;
+        let userProfile = null;
 
         window.onload = async function() {
             const urlParams = new URLSearchParams(window.location.search);
@@ -88,9 +101,14 @@
 
             if (!bookId) { window.location.href = 'biblio.html'; return; }
 
-            // 1. Récupérer l'User (Si pas connecté, on ne bloque pas tout de suite, on laisse voir le résumé)
+            // 1. Récupérer l'User et son PROFIL (important pour la date d'abo)
             const { data: { session } } = await supabase.auth.getSession();
-            if(session) userData = session.user;
+            if(session) {
+                userData = session.user;
+                // On récupère les infos détaillées (statut, date_fin_abonnement)
+                const { data: profile } = await supabase.from('profiles').select('*').eq('id', userData.id).single();
+                userProfile = profile;
+            }
 
             // 2. Récupérer le Livre
             const { data, error } = await supabase.from('lessons').select('*').eq('id', bookId).single();
@@ -101,35 +119,54 @@
             
             // 3. Vérifier accès
             if(!userData) {
-                // Pas inscrit
-                showPaywall("Connectez-vous pour acheter.");
+                showPaywall("Connectez-vous pour lire.");
             } else {
-                checkPurchaseAndLoad(bookId);
+                checkRightsAndLoad(bookId);
             }
         };
 
-        async function checkPurchaseAndLoad(bookId) {
-            // Cherche un achat validé
-            // NOTE: On utilise le mode 'text' pour l'ID car on a changé la table
+        async function checkRightsAndLoad(bookId) {
+            // A. VÉRIFICATION ABONNEMENT PREMIUM
+            if (userProfile && userProfile.date_fin_abonnement) {
+                const now = new Date();
+                const dateFin = new Date(userProfile.date_fin_abonnement);
+                
+                if (dateFin > now) {
+                    // Abonnement valide !
+                    console.log("Accès Premium validé");
+                    openReader(bookData.file_url);
+                    return; // On arrête là, c'est bon
+                }
+            }
+
+            // B. VÉRIFICATION ACHAT À L'UNITÉ
             const { data: achat } = await supabase
                 .from('achats')
                 .select('*')
                 .eq('user_id', userData.id)
-                .eq('document_id', bookId) // Supabase gère la conversion UUID/Text auto
+                .eq('document_id', bookId)
+                .eq('statut', 'valide')
                 .maybeSingle();
 
             document.getElementById('loading-screen').classList.add('hidden');
 
-            if (achat && achat.statut === 'valide') {
+            if (achat) {
+                // Achat unitaire valide !
+                console.log("Achat unitaire validé");
                 openReader(bookData.file_url);
             } else {
-                showPaywall();
-                if(achat && achat.statut === 'en_attente') {
+                // C. RIEN DU TOUT -> PAYWALL
+                // On vérifie s'il y a un paiement en attente pour afficher un message
+                const { data: pending } = await supabase.from('achats').select('*').eq('user_id', userData.id).eq('document_id', bookId).eq('statut', 'en_attente').maybeSingle();
+                if(pending) {
+                    showPaywall();
                     const status = document.getElementById('payment-status');
-                    status.innerText = "⏳ Paiement en cours de validation...";
+                    status.innerText = "⏳ Votre paiement est en cours de validation...";
                     status.classList.remove('hidden');
                     document.getElementById('btn-declare').disabled = true;
-                    document.getElementById('btn-declare').innerText = "Attente validation...";
+                    document.getElementById('btn-declare').innerText = "Validation en cours...";
+                } else {
+                    showPaywall();
                 }
             }
         }
@@ -141,17 +178,27 @@
         }
 
         // --- Logique Paiement ---
-        window.startPayment = function() {
+        window.startPayment = function(type) {
             if(!userData) return window.location.href = 'inscription.html';
-            const telAdmin = "261349120726"; 
-            const msg = `Bonjour M. Rija, je souhaite acheter "${bookData.titre}". 500 Ar. Email: ${userData.email}`;
+            const telAdmin = "261349120726"; // Votre numéro
+            let msg = "";
+            
+            if (type === 'unit') {
+                msg = `Bonjour, je veux acheter le livre : "${bookData.titre}" (500 Ar). Mon email : ${userData.email}`;
+            } else {
+                msg = `Bonjour, je veux m'abonner PREMIUM 1 mois (10.000 Ar). Mon email : ${userData.email}`;
+            }
+            
             window.open(`https://wa.me/${telAdmin}?text=${encodeURIComponent(msg)}`, '_blank');
         }
 
         window.declarePayment = async function() {
             if(!userData) return window.location.href = 'inscription.html';
-            if(!confirm("Avez-vous envoyé l'argent ?")) return;
+            if(!confirm("Avez-vous bien envoyé l'argent ?")) return;
 
+            // On crée une demande d'achat "en_attente" dans la base
+            // Par défaut, on enregistre ça comme un achat unitaire pour l'instant
+            // Pour l'abonnement, vous le gérerez manuellement dans l'admin en changeant le profil
             const { error } = await supabase.from('achats').insert([{
                 user_id: userData.id,
                 document_id: bookData.id,
@@ -159,37 +206,29 @@
             }]);
 
             if(error) alert("Erreur : " + error.message);
-            else { alert("Demande envoyée !"); location.reload(); }
+            else { alert("Demande envoyée ! Attendez la validation."); location.reload(); }
         }
 
-        // --- NOUVEAU : Logique Lecteur avec téléchargement préalable ---
         async function openReader(url) {
             document.getElementById('loading-text').innerText = "Téléchargement du livre...";
             document.getElementById('loading-screen').classList.remove('hidden');
 
             try {
-                // 1. On télécharge le fichier en binaire (Blob) pour éviter les erreurs URL
                 const response = await fetch(url);
                 if (!response.ok) throw new Error("Erreur réseau");
                 const arrayBuffer = await response.arrayBuffer();
 
-                // 2. On lance le lecteur avec les données binaires
                 document.getElementById('loading-screen').classList.add('hidden');
                 document.getElementById('reader-container').classList.remove('hidden');
                 document.getElementById('reader-controls').classList.remove('hidden');
 
                 window.book = ePub(arrayBuffer);
-                window.rendition = window.book.renderTo("viewer", {
-                    width: "100%",
-                    height: "100%",
-                    flow: "paginated"
-                });
+                window.rendition = window.book.renderTo("viewer", { width: "100%", height: "100%", flow: "paginated" });
                 window.rendition.display();
-
             } catch (e) {
                 console.error(e);
                 document.getElementById('loading-screen').classList.add('hidden');
-                alert("Impossible d'ouvrir le livre. Assurez-vous d'avoir uploadé un fichier .epub valide dans l'admin.");
+                alert("Erreur lors de l'ouverture du livre. Vérifiez le fichier.");
             }
         }
         
