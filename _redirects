@@ -1,0 +1,2 @@
+# Redirection des URLs "propres" vers l'application élève
+/cours/* /eleve.html  200
