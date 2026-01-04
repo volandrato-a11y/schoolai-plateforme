@@ -78,7 +78,7 @@ document.addEventListener("DOMContentLoaded", function() {
                 </div>
                 <div>
                     <h3 class="font-bold text-white mb-4 uppercase tracking-wider">Soutenir</h3>
-                    <p class="mb-4 opacity-70">Mvola : 034 00 000 00</p>
+                    <p class="mb-4 opacity-70">Mvola : 034 91 207 26</p>
                     ${!isPageAdmin ? `
                     <button onclick="toggleDonation()" class="inline-block bg-blue-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-blue-700 transition cursor-pointer">
                         <i class="fas fa-hand-holding-heart mr-2"></i> Soutenir
