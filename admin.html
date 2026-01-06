@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin</title>
+    <title>Admin - Studio SchoolAI</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script src="layout.js"></script>
@@ -14,30 +14,69 @@
     <div id="layout-nav"></div>
 
     <div class="max-w-6xl mx-auto py-8 px-4 w-full flex-1">
+        
         <div class="flex justify-between items-center mb-8 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-            <h1 class="text-2xl font-black text-slate-700">Admin Panel</h1>
-            <button onclick="logout()" class="text-red-600 font-bold hover:bg-red-50 px-3 py-1 rounded transition">Déconnexion</button>
+            <h1 class="text-2xl font-black text-slate-700">Panneau d'administration</h1>
+            <button onclick="logout()" class="text-red-600 font-bold hover:bg-red-50 px-3 py-1 rounded transition"><i class="fas fa-sign-out-alt mr-2"></i>Déconnexion</button>
+        </div>
+
+        <div class="flex flex-col md:flex-row gap-4 mb-8">
+            <button onclick="switchTab('create')" id="tab-create" class="flex-1 py-4 font-bold text-lg rounded-xl shadow-sm transition bg-blue-600 text-white"><i class="fas fa-plus-circle mr-2"></i>Créer / Modifier</button>
+            <button onclick="switchTab('manage')" id="tab-manage" class="flex-1 py-4 font-bold text-lg rounded-xl shadow-sm transition bg-white text-gray-500 hover:bg-gray-50"><i class="fas fa-tasks mr-2"></i>Contenu</button>
+            <button onclick="switchTab('sales')" id="tab-sales" class="flex-1 py-4 font-bold text-lg rounded-xl shadow-sm transition bg-white text-gray-500 hover:bg-gray-50"><i class="fas fa-money-bill-wave mr-2"></i>Ventes</button>
+            <button onclick="switchTab('ads')" id="tab-ads" class="flex-1 py-4 font-bold text-lg rounded-xl shadow-sm transition bg-white text-gray-500 hover:bg-gray-50"><i class="fas fa-ad mr-2"></i>Pubs</button>
         </div>
         
-        <div class="p-10 text-center text-gray-400 border-2 border-dashed rounded-xl">
-             Contenu Admin (Boutons, Formulaires, Tableaux...) à conserver ici.
-             (Copiez le contenu central de votre ancien fichier admin.html ici)
+        <div id="view-create" class="text-center p-10 bg-white border rounded text-red-500 font-bold">
+            ⚠️ Attention : Copiez-collez ici les blocs &lt;div id="view-create"&gt;... de votre ancien fichier admin.html pour retrouver vos formulaires !
         </div>
+        <div id="view-manage" class="hidden"></div>
+        <div id="view-sales" class="hidden"></div>
+        <div id="view-ads" class="hidden"></div>
 
     </div>
     
     <div id="layout-footer"></div>
 
     <script type="module">
-        // ... (Gardez votre script admin existant, juste assurez vous d'avoir layout.js chargé en haut)
+        import { GoogleGenerativeAI } from "https://esm.run/@google/generative-ai";
         import { createClient } from "https://esm.run/@supabase/supabase-js";
-        // ...
-        const ADMIN_EMAIL = "votre-email@gmail.com"; 
-        // ...
+
+        // CONFIG ADMIN
+        const API_KEY_GEMINI = "TOKEN_REMPLACEMENT_ICI"; 
+        const SUPABASE_URL = "https://jdxdthxztokjhprwynyf.supabase.co";
+        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpkeGR0aHh6dG9ramhwcnd5bnlmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcxODAyNzgsImV4cCI6MjA4Mjc1NjI3OH0.zal-p0RKJ-PYGvzal1K9-asbUbyQmqG5OtPTWnoHQmI";
+        
+        // --- LE POINT CRITIQUE ---
+        const ADMIN_EMAIL = "votre-email-admin@gmail.com"; // VERIFIEZ CETTE LIGNE À LA LETTRE PRÈS !
+
+        const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+        // ... (Reste de votre code admin JS existant pour processData, fetchAllLessons, etc.)
+        
         window.onload = async function() {
-            // ... auth check ...
+            const { data: { session } } = await supabase.auth.getSession();
+            
+            if (!session) { 
+                window.location.href = 'login.html'; 
+                return; 
+            }
+            
+            // Debugging : Afficher l'email connecté si ça bloque
+            console.log("Connecté en tant que :", session.user.email);
+            
+            if (session.user.email !== ADMIN_EMAIL) { 
+                alert("Accès refusé. Vous êtes connecté en tant que : " + session.user.email + "\nMais l'admin est : " + ADMIN_EMAIL); 
+                window.location.href = 'index.html'; 
+                return; 
+            }
+
             document.getElementById('body-content').classList.remove('hidden');
-        }
+            // ... (Appel des fonctions de chargement existantes)
+        };
+        
+        window.logout = async function() { await supabase.auth.signOut(); window.location.href = 'login.html'; }
+        window.switchTab = function(t) { /* ... Votre code existant ... */ }
+        // ...
     </script>
 </body>
 </html>
