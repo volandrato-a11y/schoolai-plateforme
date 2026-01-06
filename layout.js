@@ -7,7 +7,7 @@ document.addEventListener("DOMContentLoaded", function() {
     // Helper pour l'onglet actif
     const isActive = (page) => path.includes(page) ? "text-blue-600 border-b-2 border-blue-600 bg-blue-50" : "text-gray-500 hover:text-blue-500 hover:bg-gray-50";
     
-    // --- 1. HEADER : NAVIGATION PAR ONGLETS (Sauf sur lecture.html qui a son propre header) ---
+    // --- 1. HEADER : NAVIGATION PAR ONGLETS (Sauf sur lecture.html) ---
     let headerHTML = "";
     
     if (!path.includes("lecture.html")) {
@@ -53,7 +53,7 @@ document.addEventListener("DOMContentLoaded", function() {
         `;
     }
 
-    // --- 2. FOOTER MINIMALISTE (UNIVERSEL) ---
+    // --- 2. FOOTER MINIMALISTE (Avec lien Admin caché) ---
     const footerHTML = `
     <footer class="bg-slate-900 text-slate-400 py-4 border-t border-slate-800 mt-auto text-xs">
         <div class="max-w-7xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-2 text-center md:text-left">
@@ -63,7 +63,13 @@ document.addEventListener("DOMContentLoaded", function() {
             <div class="flex flex-col md:flex-row gap-2 md:gap-4 items-center">
                 <span class="font-mono"><i class="fas fa-phone-alt mr-1"></i> 034 91 207 26</span>
                 ${!isPageAdmin ? `<button onclick="toggleDonation()" class="text-yellow-500 hover:text-white font-bold transition">Faire un don</button>` : ''}
-                <span>&copy; 2026</span>
+                
+                <div class="flex items-center">
+                    <span>&copy; 2026</span>
+                    <a href="admin.html" class="ml-3 text-slate-700 hover:text-slate-500 transition" title="Accès Admin">
+                        <i class="fas fa-lock"></i>
+                    </a>
+                </div>
             </div>
         </div>
     </footer>
