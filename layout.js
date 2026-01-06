@@ -1,4 +1,4 @@
-// layout.js - Navigation par Onglets et Footer Minimaliste UNIVERSEL
+// layout.js - Navigation par Onglets, Footer Minimaliste et Dons avec QR Codes
 
 document.addEventListener("DOMContentLoaded", function() {
     const path = window.location.pathname;
@@ -53,7 +53,7 @@ document.addEventListener("DOMContentLoaded", function() {
         `;
     }
 
-    // --- 2. FOOTER MINIMALISTE (Avec lien Admin caché) ---
+    // --- 2. FOOTER MINIMALISTE ---
     const footerHTML = `
     <footer class="bg-slate-900 text-slate-400 py-4 border-t border-slate-800 mt-auto text-xs">
         <div class="max-w-7xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-2 text-center md:text-left">
@@ -75,26 +75,41 @@ document.addEventListener("DOMContentLoaded", function() {
     </footer>
     `;
 
-    // --- 3. MODAL DE DON ---
+    // --- 3. MODAL DE DON (AVEC IMAGES QR) ---
     const modalHTML = `
     <div id="donation-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 transition-opacity duration-300">
-        <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full overflow-hidden relative">
-            <div class="bg-gradient-to-br from-yellow-400 to-orange-500 p-6 text-center relative">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full overflow-hidden relative max-h-[90vh] overflow-y-auto">
+            
+            <div class="bg-gradient-to-br from-yellow-400 to-orange-500 p-5 text-center relative shrink-0">
                 <button onclick="toggleDonation()" class="absolute top-4 right-4 text-white/80 hover:text-white transition"><i class="fas fa-times text-xl"></i></button>
-                <div class="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-3 shadow-lg text-3xl">🎁</div>
-                <h2 class="text-2xl font-black text-white drop-shadow-md">Soutenir le projet</h2>
+                <div class="w-14 h-14 bg-white rounded-full flex items-center justify-center mx-auto mb-2 shadow-lg text-2xl">🎁</div>
+                <h2 class="text-xl font-black text-white drop-shadow-md">Soutenir le projet</h2>
             </div>
-            <div class="p-6 space-y-5">
-                <p class="text-slate-600 text-center text-sm leading-relaxed">Aidez-nous à garder l'école gratuite. ❤️</p>
-                <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 flex items-center justify-between group cursor-pointer hover:border-green-400 transition">
-                    <div class="flex items-center gap-3">
-                        <div class="bg-green-100 p-2 rounded-lg text-green-600"><i class="fas fa-mobile-alt text-xl"></i></div>
-                        <div class="text-left"><span class="block font-black text-slate-800 text-sm">MVOLA</span><span class="block text-xs text-slate-500 font-mono">034 91 207 26</span></div>
+
+            <div class="p-5 space-y-4">
+                <p class="text-slate-600 text-center text-xs leading-relaxed">Votre aide permet de maintenir les serveurs et l'IA. ❤️</p>
+                
+                <div class="bg-green-50 border border-green-200 rounded-xl p-4 text-center">
+                    <div class="flex items-center justify-center gap-2 mb-2">
+                        <span class="font-black text-green-700">MVOLA</span>
                     </div>
+                    <img src="img/mvola-qr.jpg" alt="Mvola QR" class="w-32 h-auto mx-auto rounded-lg shadow-sm border border-white mb-2 object-contain">
+                    
+                    <p class="text-xl font-black text-slate-800 select-all">034 91 207 26</p>
+                    <p class="text-[10px] text-green-700 font-bold uppercase">Nom : Ndrato</p>
                 </div>
+
                 <div class="grid grid-cols-2 gap-3">
-                    <div class="p-3 rounded-xl border border-slate-100 bg-white text-center"><i class="fab fa-bitcoin text-yellow-500 text-xl mb-1 block"></i><span class="text-xs font-bold text-slate-600">Binance</span></div>
-                    <a href="https://skrill.me/rq/Volandrato/2/USD?key=jVqo3lVYF1DSG7vvEQ9IeYrlA_A" target="_blank" class="block p-3 rounded-xl border border-slate-100 bg-white text-center hover:bg-slate-50 transition"><i class="fas fa-wallet text-purple-500 text-xl mb-1 block"></i><span class="text-xs font-bold text-slate-600">Skrill</span></a>
+                    
+                    <div class="p-2 rounded-xl border border-slate-100 bg-white text-center flex flex-col items-center">
+                        <span class="text-[10px] font-bold text-yellow-600 uppercase mb-1">Binance Pay</span>
+                        <img src="img/binance-qr.png" alt="Binance QR" class="w-full h-auto rounded shadow-sm object-contain">
+                    </div>
+                    
+                    <a href="https://skrill.me/rq/Volandrato/2/USD?key=jVqo3lVYF1DSG7vvEQ9IeYrlA_A" target="_blank" class="p-2 rounded-xl border border-slate-100 bg-white text-center hover:bg-slate-50 transition flex flex-col items-center justify-center h-full">
+                        <img src="img/skrill-logo.png" alt="Skrill" class="h-8 object-contain mb-2">
+                        <span class="text-[10px] font-bold text-purple-700 underline">Cliquez pour payer</span>
+                    </a>
                 </div>
             </div>
         </div>
