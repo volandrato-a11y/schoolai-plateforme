@@ -7,7 +7,6 @@
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/4.0.2/marked.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     
     <script src="layout.js"></script>
@@ -20,7 +19,7 @@
         .tab-btn { border-bottom: 3px solid transparent; color: #64748b; }
         .tab-btn.active { border-bottom: 3px solid #2563eb; color: #2563eb; font-weight: bold; }
         
-        /* Sidebar et Scrollbar */
+        /* Sidebar */
         details > summary { list-style: none; cursor: pointer; transition: all 0.2s; }
         details > summary::-webkit-details-marker { display: none; }
         details[open] > summary .arrow { transform: rotate(90deg); }
@@ -28,7 +27,7 @@
         .custom-scrollbar::-webkit-scrollbar { width: 6px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 10px; }
 
-        /* Chatbot UI */
+        /* Chatbot */
         .chat-bubble-user { background-color: #2563eb; color: white; border-radius: 15px 15px 0 15px; padding: 10px 15px; margin-bottom: 10px; display: inline-block; max-width: 80%; float: right; clear: both; font-size: 0.9rem; }
         .chat-bubble-ai { background-color: #f1f5f9; color: #334155; border-radius: 15px 15px 15px 0; padding: 10px 15px; margin-bottom: 10px; display: inline-block; max-width: 90%; float: left; clear: both; font-size: 0.9rem; border: 1px solid #e2e8f0; }
         .chat-bubble-ai strong { font-weight: bold; color: #1e293b; }
@@ -110,11 +109,6 @@
                     </div>
 
                     <div id="tab-exercices" class="tab-content hidden animate-fade-in">
-                        <div class="flex justify-end mb-6">
-                            <button onclick="generatePDF()" class="bg-red-500 hover:bg-red-600 text-white px-5 py-2 rounded-lg font-bold text-sm shadow-lg transition flex items-center gap-2 transform hover:scale-105">
-                                <i class="fas fa-file-pdf"></i> Télécharger PDF
-                            </button>
-                        </div>
                         <div id="exercices-list" class="space-y-8"></div>
                     </div>
 
@@ -165,8 +159,8 @@
         import { GoogleGenerativeAI } from "https://esm.run/@google/generative-ai";
         import { createClient } from "https://esm.run/@supabase/supabase-js";
 
-        // --- CONFIGURATION À REMPLIR ---
-        const API_KEY_GEMINI = "AIzaSyCawLuudWet7lr3cGMLoUszYE5VCp7y7Ew"; // ⚠️ REMETTEZ VOTRE CLÉ GEMINI ICI !
+        // CONFIGURATION
+        const API_KEY_GEMINI = "TOKEN_REMPLACEMENT_ICI"; 
         const SUPABASE_URL = "https://jdxdthxztokjhprwynyf.supabase.co";
         const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpkeGR0aHh6dG9ramhwcnd5bnlmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcxODAyNzgsImV4cCI6MjA4Mjc1NjI3OH0.zal-p0RKJ-PYGvzal1K9-asbUbyQmqG5OtPTWnoHQmI";
 
@@ -174,13 +168,10 @@
         const genAI = new GoogleGenerativeAI(API_KEY_GEMINI);
         
         let allLessons = [];
-        let currentLessonData = null; // Données JSON
-        let currentLessonRaw = null; // Métadonnées
-        window.jsPDF = window.jspdf.jsPDF; 
-
+        let currentLessonData = null; 
+        
         // 1. CHARGEMENT ET ROUTAGE
         window.onload = async function() {
-            // Gestion redirection GitHub Pages 404
             let path = window.location.pathname;
             const redirectUrl = sessionStorage.getItem('redirect');
             if (redirectUrl) {
@@ -190,7 +181,6 @@
                 history.replaceState(null, null, redirectUrl);
             }
 
-            // Extraction slug
             const parts = path.split('/');
             const slugIndex = parts.indexOf('cours');
             let slugFromUrl = null;
@@ -198,7 +188,6 @@
                 slugFromUrl = parts[parts.length - 1];
             }
 
-            // Fetch Data
             const { data, error } = await supabase.from('lessons')
                 .select('*')
                 .neq('type_contenu', 'livre_bibliotheque')
@@ -207,7 +196,6 @@
             
             if(data) {
                 allLessons = data;
-                
                 if (slugFromUrl) {
                     const targetLesson = allLessons.find(l => l.slug === slugFromUrl);
                     if (targetLesson) fetchAndDisplayLesson(targetLesson.id, false);
@@ -227,12 +215,9 @@
             document.getElementById('lesson-content').classList.remove('hidden');
             if(window.innerWidth < 768) document.getElementById('main-sidebar').classList.add('-translate-x-full');
 
-            const { data, error } = await supabase.from('lessons').select('*').eq('id', id).single();
-            if (error || !data) return alert("Erreur chargement cours");
+            const { data } = await supabase.from('lessons').select('*').eq('id', id).single();
+            if (!data) return;
 
-            currentLessonRaw = data;
-
-            // URL Update
             if (updateUrl && data.slug) {
                 const cleanNiveau = generateSlug(data.niveau);
                 const cleanMatiere = generateSlug(data.matiere);
@@ -240,13 +225,11 @@
                 history.pushState({id: id}, data.titre, newUrl);
             }
 
-            // Remplissage MÉTADONNÉES
             document.getElementById('lesson-title').innerText = data.titre;
             document.getElementById('lesson-niveau').innerText = data.niveau || 'Niveau';
             document.getElementById('lesson-classe').innerText = data.classe || 'Classe';
             document.getElementById('lesson-matiere').innerText = data.matiere || 'Matière';
 
-            // Parsing
             try {
                 const jsonContent = typeof data.contenu_html === 'string' ? JSON.parse(data.contenu_html) : data.contenu_html;
                 currentLessonData = jsonContent;
@@ -258,11 +241,8 @@
             switchTab('lecon');
         }
 
-        // 3. MOTEUR DE RENDU UNIVERSEL
+        // 3. MOTEUR DE RENDU
         function renderLessonFromJSON(content) {
-            console.log("Structure:", content); 
-
-            // Normalisation
             let core = {}, rev = {}, exos = [], qz = [];
 
             if (content.contenu) { 
@@ -274,7 +254,6 @@
                 core = root.contenu || root; rev = root.revisions || {}; exos = root.exercices || []; qz = root.quiz || [];
             }
 
-            // HTML Leçon
             let html = ``;
             if(core.definition) html += `<div class="mb-6 p-4 bg-blue-50 border-l-4 border-blue-500 rounded-r-lg shadow-sm"><strong class="text-blue-900 block mb-1 uppercase text-xs tracking-wider">Définition</strong><div class="text-blue-800">${marked.parse(core.definition)}</div></div>`;
             
@@ -292,14 +271,12 @@
             if(html === "") html = `<div class="p-4 bg-yellow-50 text-yellow-800">Format non reconnu.</div>`;
             document.getElementById('lecon-body').innerHTML = html;
 
-            // Révisions
             const idees = rev.idees_essentielles || rev.resume || [];
             document.getElementById('revisions-list').innerHTML = idees.length ? idees.map(i => `<li>${i}</li>`).join('') : "<li class='text-gray-400 italic'>Aucun résumé.</li>";
             
             const vocab = rev.vocabulaire || rev.definitions || [];
             document.getElementById('vocab-grid').innerHTML = vocab.length ? vocab.map(v => `<div class="bg-white border border-gray-100 p-4 rounded-xl shadow-sm"><strong class="text-blue-600 block mb-1 font-serif text-lg">${v.terme || v.mot}</strong><span class="text-sm text-gray-600 block">${v.def || v.definition}</span></div>`).join('') : "";
 
-            // Exercices
             if(exos.length > 0) {
                 document.getElementById('exercices-list').innerHTML = exos.map((ex, i) => `
                     <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
@@ -311,7 +288,6 @@
                 document.getElementById('exercices-list').innerHTML = "<div class='text-center text-gray-400 py-10'>Aucun exercice.</div>";
             }
 
-            // Quiz
             if(qz.length > 0) {
                 document.getElementById('quiz-container').innerHTML = qz.map((q, i) => `
                     <div class="quiz-item p-4 rounded-xl transition bg-white border border-transparent hover:border-gray-200" data-correct="${q.correct}">
@@ -328,49 +304,7 @@
 
         function renderLessonSimple(html) { document.getElementById('lecon-body').innerHTML = html; }
 
-        // 4. GÉNÉRATION PDF
-        window.generatePDF = function() {
-            if(!currentLessonData || !currentLessonRaw) return alert("Attendez le chargement...");
-            const doc = new jsPDF();
-            const margin = 20;
-            let cursorY = 20;
-
-            doc.setFontSize(22); doc.setTextColor(30, 64, 175);
-            doc.text(doc.splitTextToSize(currentLessonRaw.titre || "Cours", 170), margin, cursorY);
-            cursorY += 15;
-            doc.setFontSize(12); doc.setTextColor(100);
-            doc.text(`${currentLessonRaw.niveau || ''} - ${currentLessonRaw.classe || ''} - ${currentLessonRaw.matiere || ''}`, margin, cursorY);
-            cursorY += 15; doc.setDrawColor(200); doc.line(margin, cursorY, 190, cursorY); cursorY += 10;
-
-            let c = currentLessonData.contenu || currentLessonData;
-            if(c.definition) {
-                doc.setFontSize(14); doc.setTextColor(0); doc.text("Définition", margin, cursorY); cursorY += 7;
-                doc.setFontSize(11); doc.setTextColor(50);
-                const lines = doc.splitTextToSize(c.definition.replace(/\*\*/g, ''), 170);
-                doc.text(lines, margin, cursorY); cursorY += (lines.length * 5) + 10;
-            }
-            if(c.explication) {
-                const clean = c.explication.replace(/\*\*/g, '').replace(/#/g, '');
-                const lines = doc.splitTextToSize(clean, 170);
-                if(cursorY + (lines.length*5) > 270) { doc.addPage(); cursorY = 20; }
-                doc.setFontSize(11); doc.setTextColor(0); doc.text(lines, margin, cursorY); cursorY += (lines.length * 5) + 10;
-            }
-            // Exercices PDF
-            const exos = currentLessonData.exercices || [];
-            if(exos.length > 0) {
-                if(cursorY > 200) { doc.addPage(); cursorY = 20; }
-                cursorY += 10; doc.setFontSize(16); doc.setTextColor(30, 64, 175); doc.text("Exercices", margin, cursorY); cursorY += 10;
-                exos.forEach((ex, i) => {
-                    if(cursorY > 250) { doc.addPage(); cursorY = 20; }
-                    doc.setFontSize(12); doc.setTextColor(0);
-                    const l = doc.splitTextToSize(`Ex ${i+1}: ` + (ex.enonce||'').replace(/\*\*/g, ''), 170);
-                    doc.text(l, margin, cursorY); cursorY += (l.length * 6) + 5;
-                });
-            }
-            doc.save(`Cours_${currentLessonRaw.slug || 'schoolai'}.pdf`);
-        }
-
-        // 5. CHATBOT IA
+        // 4. CHATBOT IA
         window.sendMessage = async function() {
             const input = document.getElementById('chat-input'); const btn = document.getElementById('btn-send'); const box = document.getElementById('chatbox'); const userMsg = input.value;
             if(!userMsg) return;
