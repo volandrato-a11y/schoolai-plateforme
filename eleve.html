@@ -3,76 +3,156 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cours - SchoolAI</title>
+    <title>Salle de Classe - SchoolAI</title>
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/4.0.2/marked.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
     <script src="layout.js"></script>
+    
     <style>
         .animate-fade-in { animation: fadeIn 0.5s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* Onglets */
         .tab-btn { border-bottom: 3px solid transparent; color: #64748b; }
         .tab-btn.active { border-bottom: 3px solid #2563eb; color: #2563eb; font-weight: bold; }
+        
+        /* Arborescence Sidebar */
         details > summary { list-style: none; cursor: pointer; transition: all 0.2s; }
         details > summary::-webkit-details-marker { display: none; }
         details[open] > summary .arrow { transform: rotate(90deg); }
         .tree-level { border-left: 2px solid #e2e8f0; margin-left: 10px; padding-left: 10px; }
+        
+        /* Style Chatbot */
+        .chat-bubble-user { background-color: #2563eb; color: white; border-radius: 15px 15px 0 15px; padding: 10px 15px; margin-bottom: 10px; display: inline-block; max-width: 80%; float: right; clear: both; font-size: 0.9rem; }
+        .chat-bubble-ai { background-color: #f1f5f9; color: #334155; border-radius: 15px 15px 15px 0; padding: 10px 15px; margin-bottom: 10px; display: inline-block; max-width: 90%; float: left; clear: both; font-size: 0.9rem; border: 1px solid #e2e8f0; }
+        .chat-bubble-ai strong { font-weight: bold; color: #1e293b; }
+        .chat-bubble-ai ul { list-style-type: disc; margin-left: 20px; margin-top: 5px; }
     </style>
 </head>
 <body class="bg-slate-50 font-sans text-slate-800 flex flex-col h-screen overflow-hidden">
 
     <div id="layout-nav"></div>
 
-    <div class="flex-1 flex overflow-hidden">
-        <aside class="w-80 bg-white border-r border-gray-100 flex flex-col hidden md:flex z-20 shadow-xl flex-shrink-0">
-            <div class="p-4 bg-gray-50/50">
-                <div class="relative">
+    <div class="flex-1 flex overflow-hidden relative">
+        
+        <aside class="w-80 bg-white border-r border-gray-100 flex flex-col hidden md:flex z-20 shadow-xl flex-shrink-0 absolute md:relative h-full transition-transform duration-300 transform -translate-x-full md:translate-x-0" id="main-sidebar">
+            <div class="p-4 bg-gray-50/50 border-b border-gray-100 flex justify-between items-center">
+                <div class="relative w-full">
                     <i class="fas fa-search absolute left-3 top-3 text-gray-400 text-sm"></i>
-                    <input type="text" id="search-lesson" placeholder="Rechercher..." class="w-full pl-9 pr-4 py-3 bg-white border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 ring-blue-500 transition shadow-sm" onkeyup="handleSearch()">
+                    <input type="text" id="search-lesson" placeholder="Rechercher un cours..." class="w-full pl-9 pr-4 py-3 bg-white border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 ring-blue-500 transition shadow-sm" onkeyup="handleSearch()">
                 </div>
+                <button class="md:hidden ml-2 text-gray-500" onclick="toggleSidebar()"><i class="fas fa-times"></i></button>
             </div>
-            <div class="flex-1 overflow-y-auto px-2 py-2" id="lesson-sidebar-content">
-                <div class="text-center py-10 text-gray-400 text-sm animate-pulse"><i class="fas fa-circle-notch fa-spin mb-2 text-2xl"></i><br>Chargement...</div>
+            <div class="flex-1 overflow-y-auto px-2 py-2 custom-scrollbar" id="lesson-sidebar-content">
+                <div class="text-center py-10 text-gray-400 text-sm animate-pulse">
+                    <i class="fas fa-circle-notch fa-spin mb-2 text-2xl"></i><br>Chargement...
+                </div>
             </div>
         </aside>
 
         <main class="flex-1 flex flex-col relative w-full overflow-hidden">
-            <header class="md:hidden bg-white/90 p-4 border-b flex justify-between items-center"><button onclick="toggleSidebar()"><i class="fas fa-bars text-xl"></i></button><span class="font-bold">Cours</span></header>
+            
+            <header class="md:hidden bg-white/90 p-4 border-b flex justify-between items-center backdrop-blur-sm z-10">
+                <button onclick="toggleSidebar()" class="text-slate-700 hover:text-blue-600 transition"><i class="fas fa-bars text-xl"></i> Menu Cours</button>
+                <span class="font-bold text-slate-800">SchoolAI</span>
+            </header>
 
             <div id="content-area" class="flex-1 overflow-y-auto p-4 md:p-8 scroll-smooth bg-slate-50">
+                
                 <div id="welcome-screen" class="max-w-3xl mx-auto text-center py-12 md:py-24 animate-fade-in">
-                    <div class="inline-block p-6 rounded-full bg-white shadow-xl mb-8 transform hover:scale-105 transition duration-500"><span class="text-6xl">🎓</span></div>
-                    <h1 class="text-3xl font-black text-slate-800 mb-6">Bienvenue !</h1>
-                    <p class="text-lg text-slate-500 mb-10">Sélectionnez un cours à gauche.</p>
+                    <div class="inline-block p-6 rounded-full bg-white shadow-xl mb-8 transform hover:scale-105 transition duration-500 ring-4 ring-blue-50">
+                        <span class="text-6xl">🎓</span>
+                    </div>
+                    <h1 class="text-3xl md:text-5xl font-black text-slate-800 mb-6 tracking-tight">Bienvenue en classe !</h1>
+                    <p class="text-lg md:text-xl text-slate-500 mb-10 max-w-xl mx-auto leading-relaxed">
+                        Sélectionnez une matière dans le menu à gauche pour commencer à apprendre.
+                    </p>
+                    <button onclick="toggleSidebar()" class="md:hidden bg-blue-600 text-white px-6 py-3 rounded-xl font-bold shadow-lg shadow-blue-200">
+                        Voir les cours
+                    </button>
                 </div>
 
-                <div id="lesson-content" class="hidden max-w-5xl mx-auto pb-32">
-                    <div class="mb-6">
-                        <div class="flex items-center gap-2 mb-3"><span id="lesson-niveau" class="text-[10px] font-black uppercase tracking-widest bg-slate-800 text-white px-2 py-1 rounded">Niveau</span><span id="lesson-matiere" class="text-[10px] font-black uppercase tracking-widest bg-blue-100 text-blue-700 px-2 py-1 rounded">Matière</span></div>
-                        <h1 id="lesson-title" class="text-2xl md:text-3xl font-black text-slate-900 leading-tight mb-2">Titre du cours</h1>
-                    </div>
-                    <div class="flex border-b border-gray-200 mb-6 overflow-x-auto">
-                        <button onclick="switchTab('lecon')" class="tab-btn active flex-1 py-3 px-4 text-sm font-bold uppercase tracking-wider transition whitespace-nowrap" id="btn-lecon">📖 Leçon</button>
-                        <button onclick="switchTab('revisions')" class="tab-btn flex-1 py-3 px-4 text-sm font-bold uppercase tracking-wider transition whitespace-nowrap" id="btn-revisions">🧠 Retenir</button>
-                        <button onclick="switchTab('exercices')" class="tab-btn flex-1 py-3 px-4 text-sm font-bold uppercase tracking-wider transition whitespace-nowrap" id="btn-exercices">📝 Exos</button>
-                        <button onclick="switchTab('quiz')" class="tab-btn flex-1 py-3 px-4 text-sm font-bold uppercase tracking-wider transition whitespace-nowrap" id="btn-quiz">❓ Quiz</button>
+                <div id="lesson-content" class="hidden max-w-5xl mx-auto pb-32 animate-fade-in">
+                    
+                    <div class="mb-8">
+                        <div class="flex flex-wrap items-center gap-2 mb-4">
+                            <span id="lesson-niveau" class="text-[10px] font-black uppercase tracking-widest bg-slate-800 text-white px-3 py-1 rounded-full shadow-sm">Niveau</span>
+                            <span id="lesson-classe" class="text-[10px] font-black uppercase tracking-widest bg-orange-500 text-white px-3 py-1 rounded-full shadow-sm">Classe</span>
+                            <span id="lesson-matiere" class="text-[10px] font-black uppercase tracking-widest bg-blue-100 text-blue-700 px-3 py-1 rounded-full border border-blue-200">Matière</span>
+                        </div>
+                        <h1 id="lesson-title" class="text-3xl md:text-5xl font-black text-slate-900 leading-tight mb-2">Titre du cours</h1>
                     </div>
 
-                    <div id="tab-lecon" class="tab-content animate-fade-in"><div id="lecon-body" class="prose max-w-none bg-white p-6 rounded-3xl shadow-sm border border-gray-100 text-slate-700 leading-relaxed"></div></div>
-                    <div id="tab-revisions" class="tab-content hidden animate-fade-in"><ul id="revisions-list" class="space-y-3 mb-8 list-disc pl-5"></ul><div id="vocab-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div></div>
-                    <div id="tab-exercices" class="tab-content hidden animate-fade-in"><button onclick="generatePDF()" class="bg-red-500 text-white px-4 py-2 rounded mb-4 font-bold text-sm"><i class="fas fa-file-pdf mr-2"></i>Télécharger PDF</button><div id="exercices-list" class="space-y-6"></div></div>
-                    <div id="tab-quiz" class="tab-content hidden animate-fade-in"><div id="quiz-container" class="space-y-6"></div></div>
+                    <div class="flex border-b border-gray-200 mb-8 overflow-x-auto bg-white rounded-t-xl sticky top-0 z-10 shadow-sm">
+                        <button onclick="switchTab('lecon')" class="tab-btn active flex-1 py-4 px-6 text-sm font-bold uppercase tracking-wider transition whitespace-nowrap hover:bg-gray-50" id="btn-lecon">📖 Leçon</button>
+                        <button onclick="switchTab('revisions')" class="tab-btn flex-1 py-4 px-6 text-sm font-bold uppercase tracking-wider transition whitespace-nowrap hover:bg-gray-50" id="btn-revisions">🧠 Retenir</button>
+                        <button onclick="switchTab('exercices')" class="tab-btn flex-1 py-4 px-6 text-sm font-bold uppercase tracking-wider transition whitespace-nowrap hover:bg-gray-50" id="btn-exercices">📝 Exos</button>
+                        <button onclick="switchTab('quiz')" class="tab-btn flex-1 py-4 px-6 text-sm font-bold uppercase tracking-wider transition whitespace-nowrap hover:bg-gray-50" id="btn-quiz">❓ Quiz</button>
+                    </div>
+
+                    <div id="tab-lecon" class="tab-content animate-fade-in">
+                        <div id="lecon-body" class="prose max-w-none bg-white p-8 md:p-12 rounded-b-xl rounded-tr-xl shadow-sm border border-gray-100 text-slate-700 leading-relaxed text-lg"></div>
+                    </div>
+
+                    <div id="tab-revisions" class="tab-content hidden animate-fade-in">
+                        <div class="bg-yellow-50 p-8 rounded-2xl border border-yellow-100 mb-8">
+                            <h3 class="font-bold text-yellow-800 text-lg mb-4 flex items-center"><i class="fas fa-lightbulb mr-2"></i> L'Essentiel</h3>
+                            <ul id="revisions-list" class="space-y-3 list-disc pl-5 text-slate-700"></ul>
+                        </div>
+                        <h3 class="font-bold text-slate-800 mb-4">Vocabulaire & Définitions</h3>
+                        <div id="vocab-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+                    </div>
+
+                    <div id="tab-exercices" class="tab-content hidden animate-fade-in">
+                        <div class="flex justify-end mb-6">
+                            <button onclick="generatePDF()" class="bg-red-500 hover:bg-red-600 text-white px-5 py-2 rounded-lg font-bold text-sm shadow-lg transition flex items-center gap-2 transform hover:scale-105">
+                                <i class="fas fa-file-pdf"></i> Télécharger PDF
+                            </button>
+                        </div>
+                        <div id="exercices-list" class="space-y-8"></div>
+                    </div>
+
+                    <div id="tab-quiz" class="tab-content hidden animate-fade-in">
+                        <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
+                            <div id="quiz-container" class="space-y-8"></div>
+                            <div class="mt-8 pt-6 border-t text-center">
+                                <button onclick="checkQuiz()" class="bg-blue-600 text-white px-8 py-3 rounded-full font-bold shadow-lg hover:bg-blue-700 transition">Vérifier mes réponses</button>
+                                <div id="quiz-result" class="mt-4 font-bold text-xl hidden"></div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
             
-            <div class="fixed bottom-16 right-6 z-40 flex flex-col items-end">
-                <div id="chat-window" class="hidden bg-white w-80 h-[400px] rounded-2xl shadow-2xl border border-gray-200 flex flex-col mb-4 overflow-hidden animate-fade-in">
-                    <div class="bg-blue-600 p-3 text-white flex justify-between items-center shrink-0 shadow-md"><span class="font-bold text-sm">Assistant Prof</span><button onclick="toggleChat()"><i class="fas fa-times"></i></button></div>
-                    <div id="chatbox" class="flex-1 overflow-y-auto p-4 bg-slate-50 text-sm space-y-4"></div>
-                    <div class="p-3 bg-white border-t flex gap-2"><input type="text" id="chat-input" class="flex-1 bg-gray-50 border rounded-lg px-3 py-2 text-sm" onkeypress="if(event.key==='Enter') sendMessage()"><button onclick="sendMessage()" class="bg-blue-600 text-white w-10 h-10 rounded-lg"><i class="fas fa-paper-plane"></i></button></div>
+            <div class="fixed bottom-14 right-6 z-40 flex flex-col items-end pointer-events-none">
+                <div id="chat-window" class="hidden pointer-events-auto bg-white w-80 md:w-96 h-[450px] rounded-2xl shadow-2xl border border-gray-200 flex flex-col mb-4 overflow-hidden animate-fade-in transform origin-bottom-right">
+                    <div class="bg-gradient-to-r from-blue-600 to-blue-700 p-4 text-white flex justify-between items-center shrink-0 shadow-md">
+                        <div class="flex items-center gap-2">
+                            <div class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center"><i class="fas fa-robot"></i></div>
+                            <div>
+                                <span class="font-bold block text-sm">Prof IA</span>
+                                <span class="text-[10px] opacity-80 block leading-none">En ligne</span>
+                            </div>
+                        </div>
+                        <button onclick="toggleChat()" class="hover:bg-white/20 p-1 rounded transition"><i class="fas fa-times"></i></button>
+                    </div>
+                    <div id="chatbox" class="flex-1 overflow-y-auto p-4 bg-slate-50 space-y-2">
+                        <div class="chat-bubble-ai">Bonjour ! Je suis ton assistant. Pose-moi une question sur ce cours. 👋</div>
+                    </div>
+                    <div class="p-3 bg-white border-t flex gap-2">
+                        <input type="text" id="chat-input" class="flex-1 bg-gray-100 border-0 rounded-xl px-4 py-3 text-sm focus:ring-2 ring-blue-500 outline-none transition" placeholder="Ta question..." onkeypress="if(event.key==='Enter') sendMessage()">
+                        <button onclick="sendMessage()" id="btn-send" class="bg-blue-600 hover:bg-blue-700 text-white w-12 h-12 rounded-xl flex items-center justify-center shadow-md transition disabled:opacity-50">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
                 </div>
-                <button onclick="toggleChat()" class="w-14 h-14 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-xl flex items-center justify-center text-2xl transition transform hover:scale-110 border-4 border-white"><i class="fas fa-comment-dots"></i></button>
+                <button onclick="toggleChat()" class="pointer-events-auto w-14 h-14 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-xl flex items-center justify-center text-2xl transition transform hover:scale-110 border-4 border-white group">
+                    <i class="fas fa-comment-dots group-hover:animate-bounce"></i>
+                </button>
             </div>
         </main>
     </div>
@@ -82,39 +162,358 @@
     <script type="module">
         import { GoogleGenerativeAI } from "https://esm.run/@google/generative-ai";
         import { createClient } from "https://esm.run/@supabase/supabase-js";
-        // CLES A REMETTRE ICI
-        const API_KEY_GEMINI = "TOKEN_REMPLACEMENT_ICI"; 
+
+        // --- CONFIGURATION ---
+        const API_KEY_GEMINI = "TOKEN_REMPLACEMENT_ICI"; // ⚠️ REMPLACEZ PAR VOTRE CLÉ API GEMINI
         const SUPABASE_URL = "https://jdxdthxztokjhprwynyf.supabase.co";
         const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpkeGR0aHh6dG9ramhwcnd5bnlmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcxODAyNzgsImV4cCI6MjA4Mjc1NjI3OH0.zal-p0RKJ-PYGvzal1K9-asbUbyQmqG5OtPTWnoHQmI";
+
         const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
         const genAI = new GoogleGenerativeAI(API_KEY_GEMINI);
-        let allLessons = []; let currentLessonData = null; window.jsPDF = window.jspdf.jsPDF;
+        
+        let allLessons = [];
+        let currentLessonData = null; // Contient tout le JSON du cours actuel
+        let currentLessonRaw = null; // Contient les métadonnées (titre, niveau...)
+        window.jsPDF = window.jspdf.jsPDF; // Initialisation PDF
 
-        function generateSlug(text) { if(!text) return ''; return text.toString().toLowerCase().replace(/\s+/g, '-').replace(/[^\w\-]+/g, '').replace(/\-\-+/g, '-').replace(/^-+/, '').replace(/-+$/, ''); }
+        // 1. CHARGEMENT ET ROUTAGE
         window.onload = async function() {
-            let path = window.location.pathname; const redirectUrl = sessionStorage.getItem('redirect');
-            if (redirectUrl) { sessionStorage.removeItem('redirect'); const urlObj = new URL(redirectUrl); path = urlObj.pathname; history.replaceState(null, null, redirectUrl); }
-            const parts = path.split('/'); const slugIndex = parts.indexOf('cours'); let slugFromUrl = null;
-            if (slugIndex !== -1 && parts[slugIndex + 1]) { slugFromUrl = parts[parts.length - 1]; }
-            const { data } = await supabase.from('lessons').select('*').neq('type_contenu', 'livre_bibliotheque').eq('est_publie', true).order('titre', { ascending: true });
-            if(data) { allLessons = data; if (slugFromUrl) { const t = allLessons.find(l => l.slug === slugFromUrl); if (t) fetchAndDisplayLesson(t.id, false); else buildAndRenderTree(allLessons); } else { const u = new URLSearchParams(window.location.search); const f = u.get('filter'); if(f) buildAndRenderTree(allLessons.filter(l => l.niveau === f)); else buildAndRenderTree(allLessons); } }
+            // Gestion de la redirection GitHub Pages
+            let path = window.location.pathname;
+            const redirectUrl = sessionStorage.getItem('redirect');
+            if (redirectUrl) {
+                sessionStorage.removeItem('redirect');
+                const urlObj = new URL(redirectUrl);
+                path = urlObj.pathname;
+                history.replaceState(null, null, redirectUrl);
+            }
+
+            // Extraction du slug (le dernier bout de l'URL)
+            const parts = path.split('/');
+            const slugIndex = parts.indexOf('cours');
+            let slugFromUrl = null;
+            if (slugIndex !== -1 && parts[slugIndex + 1]) {
+                slugFromUrl = parts[parts.length - 1];
+            }
+
+            // Récupération des cours
+            const { data, error } = await supabase.from('lessons')
+                .select('*')
+                .neq('type_contenu', 'livre_bibliotheque')
+                .eq('est_publie', true)
+                .order('titre', { ascending: true });
+            
+            if(data) {
+                allLessons = data;
+                
+                // Si URL contient un slug, on charge le cours direct
+                if (slugFromUrl) {
+                    const targetLesson = allLessons.find(l => l.slug === slugFromUrl);
+                    if (targetLesson) {
+                        fetchAndDisplayLesson(targetLesson.id, false);
+                    } else {
+                        buildAndRenderTree(allLessons);
+                    }
+                } else {
+                    // Sinon on regarde s'il y a un filtre ?filter=Lycée
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const filterParam = urlParams.get('filter');
+                    if(filterParam) {
+                        buildAndRenderTree(allLessons.filter(l => l.niveau === filterParam));
+                    } else {
+                        buildAndRenderTree(allLessons);
+                    }
+                }
+            }
         };
-        // Reste du code JS identique à la version précédente (fetchAndDisplayLesson, renderLessonFromJSON, etc.)
-        // Je remets les fonctions clés pour que ça marche :
+
+        // 2. AFFICHAGE D'UN COURS
         window.fetchAndDisplayLesson = async function(id, updateUrl = true) {
-            document.getElementById('welcome-screen').classList.add('hidden'); document.getElementById('lesson-content').classList.remove('hidden'); if(window.innerWidth < 768) document.querySelector('aside').classList.add('hidden');
-            const { data } = await supabase.from('lessons').select('*').eq('id', id).single(); if (!data) return;
-            if (updateUrl && data.slug) { const cn = generateSlug(data.niveau); const cm = generateSlug(data.matiere); history.pushState({id: id}, data.titre, `/cours/${cn}/${cm}/${data.slug}`); }
-            document.getElementById('lesson-niveau').innerText = data.niveau; document.getElementById('lesson-matiere').innerText = data.matiere; document.getElementById('lesson-title').innerText = data.titre;
-            try { const j = JSON.parse(data.contenu_html); currentLessonData = j; renderLessonFromJSON(j); } catch (e) { currentLessonData = { simple_text: data.contenu_html }; renderLessonSimple(data.contenu_html); } switchTab('lecon');
+            // UI Switch
+            document.getElementById('welcome-screen').classList.add('hidden');
+            document.getElementById('lesson-content').classList.remove('hidden');
+            if(window.innerWidth < 768) document.getElementById('main-sidebar').classList.add('-translate-x-full'); // Fermer sidebar mobile
+
+            const { data, error } = await supabase.from('lessons').select('*').eq('id', id).single();
+            if (error || !data) return alert("Erreur chargement cours");
+
+            currentLessonRaw = data;
+
+            // Mise à jour URL
+            if (updateUrl && data.slug) {
+                const cleanNiveau = generateSlug(data.niveau);
+                const cleanMatiere = generateSlug(data.matiere);
+                const newUrl = `cours/${cleanNiveau}/${cleanMatiere}/${data.slug}`;
+                history.pushState({id: id}, data.titre, newUrl);
+            }
+
+            // Remplissage MÉTADONNÉES
+            document.getElementById('lesson-title').innerText = data.titre;
+            document.getElementById('lesson-niveau').innerText = data.niveau || 'Niveau';
+            document.getElementById('lesson-classe').innerText = data.classe || 'Classe';
+            document.getElementById('lesson-matiere').innerText = data.matiere || 'Matière';
+
+            // Parsing du contenu
+            try {
+                // Si c'est du JSON stocké
+                const jsonContent = typeof data.contenu_html === 'string' ? JSON.parse(data.contenu_html) : data.contenu_html;
+                currentLessonData = jsonContent;
+                renderLessonFromJSON(jsonContent);
+            } catch (e) {
+                // Si c'est juste du texte simple (vieux format)
+                currentLessonData = { simple_text: data.contenu_html };
+                renderLessonSimple(data.contenu_html);
+            }
+            switchTab('lecon');
         }
-        function renderLessonFromJSON(j){const c=j.contenu||{};document.getElementById('lecon-body').innerHTML=`<div class="mb-4 font-bold text-blue-900 border-l-4 border-blue-500 pl-4 bg-blue-50 p-2 rounded">${c.definition||''}</div>`+marked.parse(c.explication||'');if(c.etapes)document.getElementById('lecon-body').innerHTML+=`<ul class="list-disc pl-5 mt-4 space-y-2">${c.etapes.map(e=>`<li>${e}</li>`).join('')}</ul>`;/*...*/ }
-        function renderLessonSimple(h){document.getElementById('lecon-body').innerHTML=h;}
-        function buildAndRenderTree(l){const c=document.getElementById('lesson-sidebar-content');c.innerHTML='';if(l.length===0){c.innerHTML='Rien.';return;}l.forEach(x=>{c.innerHTML+=`<div onclick="fetchAndDisplayLesson(${x.id})" class="p-3 border-b border-gray-50 cursor-pointer hover:bg-blue-50 text-sm font-medium text-slate-600">${x.titre}</div>`});}
-        window.switchTab=function(t){document.querySelectorAll('.tab-content').forEach(e=>e.classList.add('hidden'));document.querySelectorAll('.tab-btn').forEach(e=>e.classList.remove('active'));document.getElementById('tab-'+t).classList.remove('hidden');document.getElementById('btn-'+t).classList.add('active');}
-        window.toggleSidebar=function(){document.querySelector('aside').classList.toggle('hidden');}
-        window.toggleChat=function(){document.getElementById('chat-window').classList.toggle('hidden');}
-        window.sendMessage=async function(){/*...*/}; window.generatePDF=function(){/*...*/};
+
+        // 3. MOTEUR DE RENDU (JSON -> HTML)
+        function renderLessonFromJSON(content) {
+            const c = content.contenu || {};
+            
+            // Onglet Leçon
+            let html = ``;
+            if(c.definition) html += `<div class="mb-6 p-4 bg-blue-50 border-l-4 border-blue-500 rounded-r-lg"><strong class="text-blue-900 block mb-1">Définition :</strong> ${c.definition}</div>`;
+            if(c.explication) html += marked.parse(c.explication);
+            if(c.etapes && c.etapes.length > 0) {
+                html += `<h3 class="font-bold text-xl mt-6 mb-3">Étapes clés</h3><ul class="space-y-2">`;
+                c.etapes.forEach((et, i) => html += `<li class="flex gap-3"><span class="bg-blue-100 text-blue-700 font-bold w-6 h-6 rounded-full flex items-center justify-center text-xs shrink-0">${i+1}</span> <span>${et}</span></li>`);
+                html += `</ul>`;
+            }
+            if(c.exemple) html += `<div class="mt-8 p-6 bg-slate-100 rounded-xl border border-slate-200"><strong class="text-slate-600 block mb-2 uppercase text-xs tracking-wider">Exemple :</strong> <div class="font-mono text-sm">${c.exemple}</div></div>`;
+            document.getElementById('lecon-body').innerHTML = html;
+
+            // Onglet Révisions
+            const rev = content.revisions || {};
+            document.getElementById('revisions-list').innerHTML = (rev.idees_essentielles || []).map(i => `<li>${i}</li>`).join('');
+            document.getElementById('vocab-grid').innerHTML = (rev.vocabulaire || []).map(v => `<div class="bg-white border p-3 rounded-lg shadow-sm"><strong class="text-blue-600 block">${v.terme}</strong><span class="text-sm text-gray-600">${v.def}</span></div>`).join('');
+
+            // Onglet Exercices
+            const exos = content.exercices || [];
+            document.getElementById('exercices-list').innerHTML = exos.map((ex, i) => `
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                    <span class="inline-block bg-green-100 text-green-700 font-bold px-3 py-1 rounded-full text-xs mb-3">Exercice ${i+1}</span>
+                    <p class="font-bold text-lg mb-4">${ex.enonce}</p>
+                    <details class="group bg-gray-50 rounded-lg">
+                        <summary class="p-4 font-bold text-gray-500 hover:text-blue-600 flex items-center gap-2 select-none"><i class="fas fa-chevron-right arrow transition-transform"></i> Voir la solution</summary>
+                        <div class="p-4 pt-0 text-green-700 border-t border-gray-100">${ex.solution}</div>
+                    </details>
+                </div>
+            `).join('');
+
+            // Onglet Quiz
+            const quiz = content.quiz || [];
+            document.getElementById('quiz-container').innerHTML = quiz.map((q, i) => `
+                <div class="quiz-item" data-correct="${q.correct}">
+                    <p class="font-bold text-lg mb-4"><span class="text-blue-600 mr-2">${i+1}.</span> ${q.question}</p>
+                    <div class="space-y-2">
+                        ${q.options.map((opt, idx) => `
+                            <label class="flex items-center p-3 border rounded-xl cursor-pointer hover:bg-blue-50 transition">
+                                <input type="radio" name="q${i}" value="${idx}" class="w-5 h-5 text-blue-600">
+                                <span class="ml-3">${opt}</span>
+                            </label>
+                        `).join('')}
+                    </div>
+                </div>
+            `).join('');
+            document.getElementById('quiz-result').classList.add('hidden');
+        }
+
+        function renderLessonSimple(html) {
+            document.getElementById('lecon-body').innerHTML = html;
+        }
+
+        // 4. GÉNÉRATION PDF
+        window.generatePDF = function() {
+            if(!currentLessonData || !currentLessonRaw) return alert("Pas de données");
+            
+            const doc = new jsPDF();
+            const margin = 20;
+            let cursorY = 20;
+
+            // En-tête
+            doc.setFontSize(22);
+            doc.setTextColor(30, 64, 175); // Bleu
+            doc.text(currentLessonRaw.titre || "Cours", margin, cursorY);
+            
+            cursorY += 10;
+            doc.setFontSize(12);
+            doc.setTextColor(100);
+            doc.text(`${currentLessonRaw.niveau} - ${currentLessonRaw.classe} - ${currentLessonRaw.matiere}`, margin, cursorY);
+            
+            cursorY += 15;
+            doc.setDrawColor(200);
+            doc.line(margin, cursorY, 190, cursorY);
+            cursorY += 10;
+
+            // Contenu - On extrait le texte brut du JSON
+            const c = currentLessonData.contenu || {};
+            
+            if(c.definition) {
+                doc.setFontSize(14); doc.setTextColor(0); doc.text("Définition", margin, cursorY); cursorY += 7;
+                doc.setFontSize(11); doc.setTextColor(50);
+                const lines = doc.splitTextToSize(c.definition, 170);
+                doc.text(lines, margin, cursorY);
+                cursorY += (lines.length * 6) + 10;
+            }
+
+            if(c.explication) {
+                // Nettoyage basique du markdown pour le PDF
+                const cleanText = c.explication.replace(/\*\*/g, '').replace(/#/g, '');
+                const lines = doc.splitTextToSize(cleanText, 170);
+                if(cursorY + (lines.length*6) > 280) { doc.addPage(); cursorY = 20; }
+                doc.text(lines, margin, cursorY);
+                cursorY += (lines.length * 6) + 10;
+            }
+
+            // Exercices
+            if(currentLessonData.exercices) {
+                if(cursorY > 200) { doc.addPage(); cursorY = 20; }
+                cursorY += 10;
+                doc.setFontSize(16); doc.setTextColor(0); 
+                doc.text("Exercices", margin, cursorY);
+                cursorY += 10;
+
+                currentLessonData.exercices.forEach((ex, i) => {
+                    if(cursorY > 270) { doc.addPage(); cursorY = 20; }
+                    doc.setFontSize(12); doc.setTextColor(0);
+                    doc.text(`Ex ${i+1}: ` + ex.enonce, margin, cursorY);
+                    cursorY += 10;
+                });
+            }
+
+            doc.save(`Cours_${currentLessonRaw.slug}.pdf`);
+        }
+
+        // 5. CHATBOT IA
+        window.sendMessage = async function() {
+            const input = document.getElementById('chat-input');
+            const btn = document.getElementById('btn-send');
+            const box = document.getElementById('chatbox');
+            const userMsg = input.value;
+            
+            if(!userMsg) return;
+
+            // Affichage User
+            box.innerHTML += `<div class="chat-bubble-user">${userMsg}</div>`;
+            input.value = '';
+            box.scrollTop = box.scrollHeight;
+            btn.disabled = true;
+
+            // Affichage Loading
+            const loadingId = 'loading-' + Date.now();
+            box.innerHTML += `<div id="${loadingId}" class="chat-bubble-ai"><i class="fas fa-ellipsis-h fa-beat"></i></div>`;
+            box.scrollTop = box.scrollHeight;
+
+            try {
+                const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+                
+                // CONTEXTE : On donne le cours à l'IA
+                const context = `Tu es un professeur pédagogique et bienveillant. 
+                Voici le contenu du cours que l'élève est en train de lire (en format JSON) : 
+                ${JSON.stringify(currentLessonData)}. 
+                Réponds à la question de l'élève en te basant UNIQUEMENT sur ce cours. 
+                Si la réponse n'est pas dans le cours, dis-le poliment et propose une explication générale.
+                Sois concis et clair. Utilise du Markdown (gras, listes) pour la mise en forme.`;
+
+                const result = await model.generateContent([context, userMsg]);
+                const response = result.response.text();
+
+                // Suppression loading et affichage réponse
+                document.getElementById(loadingId).remove();
+                box.innerHTML += `<div class="chat-bubble-ai">${marked.parse(response)}</div>`;
+                
+            } catch (error) {
+                document.getElementById(loadingId).remove();
+                box.innerHTML += `<div class="chat-bubble-ai text-red-500">Oups, je suis fatigué. Réessaie plus tard.</div>`;
+                console.error(error);
+            }
+            
+            box.scrollTop = box.scrollHeight;
+            btn.disabled = false;
+        }
+        window.toggleChat = function() { document.getElementById('chat-window').classList.toggle('hidden'); }
+
+        // 6. UTILITAIRES
+        function generateSlug(text) { if(!text) return ''; return text.toString().toLowerCase().replace(/\s+/g, '-').replace(/[^\w\-]+/g, '').replace(/\-\-+/g, '-').replace(/^-+/, '').replace(/-+$/, ''); }
+        
+        // Construction de l'arbre Sidebar
+        function buildAndRenderTree(lessons) {
+            const container = document.getElementById('lesson-sidebar-content');
+            container.innerHTML = '';
+            
+            if(lessons.length === 0) { container.innerHTML = '<div class="text-center text-gray-400 p-4">Aucun cours trouvé.</div>'; return; }
+
+            // Groupement par Niveau -> Matière
+            const tree = {};
+            lessons.forEach(l => {
+                if(!tree[l.niveau]) tree[l.niveau] = {};
+                if(!tree[l.niveau][l.matiere]) tree[l.niveau][l.matiere] = [];
+                tree[l.niveau][l.matiere].push(l);
+            });
+
+            // Rendu HTML
+            for (const [niveau, matieres] of Object.entries(tree)) {
+                let html = `<details open class="mb-2"><summary class="font-bold text-slate-800 p-2 hover:bg-gray-50 rounded flex items-center"><i class="fas fa-chevron-right arrow text-xs text-gray-400 mr-2"></i> ${niveau}</summary><div class="tree-level">`;
+                
+                for (const [matiere, coursList] of Object.entries(matieres)) {
+                    html += `<details class="mb-1"><summary class="text-sm font-semibold text-slate-600 p-2 hover:bg-gray-50 rounded flex items-center"><i class="fas fa-chevron-right arrow text-xs text-gray-300 mr-2"></i> ${matiere}</summary><div class="tree-level">`;
+                    
+                    coursList.forEach(c => {
+                        html += `<div onclick="fetchAndDisplayLesson(${c.id})" class="p-2 text-sm text-gray-500 cursor-pointer hover:text-blue-600 hover:bg-blue-50 rounded transition truncate flex items-center"><i class="fas fa-file-alt mr-2 opacity-50"></i> ${c.titre}</div>`;
+                    });
+                    
+                    html += `</div></details>`;
+                }
+                html += `</div></details>`;
+                container.innerHTML += html;
+            }
+        }
+
+        window.handleSearch = function() {
+            const q = document.getElementById('search-lesson').value.toLowerCase();
+            const filtered = allLessons.filter(l => l.titre.toLowerCase().includes(q) || l.matiere.toLowerCase().includes(q));
+            buildAndRenderTree(filtered);
+        }
+
+        window.switchTab = function(t) {
+            document.querySelectorAll('.tab-content').forEach(e => e.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(e => e.classList.remove('active'));
+            document.getElementById('tab-'+t).classList.remove('hidden');
+            document.getElementById('btn-'+t).classList.add('active');
+        }
+
+        window.toggleSidebar = function() {
+            const sb = document.getElementById('main-sidebar');
+            if(sb.classList.contains('-translate-x-full')) {
+                sb.classList.remove('hidden', '-translate-x-full');
+            } else {
+                sb.classList.add('-translate-x-full');
+            }
+        }
+        
+        // Quiz Checker
+        window.checkQuiz = function() {
+            let score = 0;
+            let total = 0;
+            const items = document.querySelectorAll('.quiz-item');
+            items.forEach((item, i) => {
+                total++;
+                const correct = item.dataset.correct;
+                const selected = document.querySelector(`input[name="q${i}"]:checked`);
+                if(selected && selected.value === correct) {
+                    score++;
+                    item.classList.add('bg-green-50', 'border', 'border-green-200', 'rounded-lg', 'p-2');
+                } else {
+                    item.classList.add('bg-red-50', 'border', 'border-red-200', 'rounded-lg', 'p-2');
+                }
+            });
+            const resDiv = document.getElementById('quiz-result');
+            resDiv.innerText = `Note : ${score} / ${total}`;
+            resDiv.classList.remove('hidden', 'text-green-600', 'text-red-600');
+            resDiv.classList.add(score > total/2 ? 'text-green-600' : 'text-red-600');
+        }
+
     </script>
 </body>
 </html>
