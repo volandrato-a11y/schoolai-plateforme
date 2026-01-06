@@ -3,13 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lecture</title>
+    <title>Lecture - SchoolAI</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.5/jszip.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/epubjs/dist/epub.min.js"></script>
     <script src="layout.js"></script>
-    <style>#viewer { height: 75vh; background: #fff; } .arrow-btn { position: absolute; top: 50%; transform: translateY(-50%); z-index: 50; background: rgba(255,255,255,0.9); padding: 1rem; border-radius: 50%; box-shadow: 0 4px 6px rgba(0,0,0,0.1); cursor: pointer; }</style>
+    <style>
+        #viewer { height: 75vh; background: #fff; }
+        .arrow-btn { position: absolute; top: 50%; transform: translateY(-50%); z-index: 50; background: rgba(255,255,255,0.9); padding: 1rem; border-radius: 50%; box-shadow: 0 4px 6px rgba(0,0,0,0.1); cursor: pointer; }
+        .option-card.selected { border-color: #2563eb; background-color: #eff6ff; }
+    </style>
 </head>
 <body class="bg-slate-100 h-screen flex flex-col overflow-hidden">
 
@@ -18,25 +22,82 @@
             <a href="biblio.html" class="text-gray-500 hover:text-blue-600 px-2"><i class="fas fa-arrow-left"></i></a>
             <h1 id="book-title" class="font-bold text-slate-800 truncate text-sm">Chargement...</h1>
         </div>
-        <div id="reader-controls" class="flex items-center gap-2">
+        <div id="reader-controls" class="flex items-center gap-2 hidden">
             <button onclick="changeFontSize(-2)" class="p-2 text-gray-500"><i class="fas fa-minus"></i></button>
             <span class="text-xs font-bold text-gray-400">Aa</span>
             <button onclick="changeFontSize(2)" class="p-2 text-gray-500"><i class="fas fa-plus"></i></button>
         </div>
     </nav>
 
-    <div class="flex-1 relative w-full max-w-4xl mx-auto bg-white shadow-xl my-0 md:my-4 md:rounded-xl overflow-hidden">
+    <div class="flex-1 relative w-full max-w-4xl mx-auto bg-white shadow-xl my-0 md:my-4 md:rounded-xl overflow-hidden relative">
         
         <div id="loading-screen" class="absolute inset-0 flex flex-col items-center justify-center bg-white z-50">
             <i class="fas fa-circle-notch fa-spin text-4xl text-blue-600 mb-4"></i>
-            <p class="text-sm font-bold text-gray-500">Ouverture du livre...</p>
+            <p id="loading-text" class="text-sm font-bold text-gray-500">Vérification des droits...</p>
         </div>
 
-        <div id="paywall" class="hidden absolute inset-0 z-40 bg-white flex flex-col items-center justify-center p-6 text-center">
-            <i class="fas fa-lock text-4xl text-blue-300 mb-4"></i>
-            <h2 class="text-xl font-bold">Contenu Payant</h2>
-            <p class="text-sm text-gray-500 mb-4">500 Ar pour débloquer</p>
-            <button class="bg-blue-600 text-white px-6 py-2 rounded-full font-bold">Débloquer</button>
+        <div id="paywall" class="hidden absolute inset-0 z-40 bg-white flex flex-col items-center justify-start p-6 text-center overflow-y-auto">
+            
+            <div id="payment-step-1" class="max-w-xl w-full">
+                <div class="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl animate-bounce">
+                    <i class="fas fa-lock"></i>
+                </div>
+                <h2 class="text-2xl font-black text-slate-800 mb-2">Contenu Verrouillé</h2>
+                <p class="text-gray-500 mb-6">Choisissez une option pour débloquer l'accès.</p>
+
+                <div class="space-y-3 mb-6">
+                    <div onclick="selectOption(500)" class="option-card cursor-pointer border-2 border-gray-200 rounded-xl p-4 flex justify-between items-center hover:border-blue-300 transition" id="opt-500">
+                        <div class="text-left"><div class="font-bold text-slate-800">Ce livre uniquement</div><div class="text-xs text-gray-500">Accès à vie</div></div>
+                        <div class="font-black text-xl text-blue-600">500 Ar</div>
+                    </div>
+
+                    <div onclick="selectOption(10000)" class="option-card cursor-pointer border-2 border-purple-200 bg-purple-50 rounded-xl p-4 flex justify-between items-center hover:border-purple-400 transition" id="opt-10000">
+                        <div class="text-left"><div class="font-bold text-purple-900">Premium 1 Mois</div><div class="text-xs text-purple-600">Tout illimité</div></div>
+                        <div class="font-black text-xl text-purple-700">10 000 Ar</div>
+                    </div>
+
+                    <div onclick="selectOption(27000)" class="option-card cursor-pointer border-2 border-gray-200 rounded-xl p-4 flex justify-between items-center hover:border-blue-300 transition" id="opt-27000">
+                        <div class="text-left"><div class="font-bold text-slate-800">Premium 3 Mois</div><div class="text-xs text-gray-500">Économique</div></div>
+                        <div class="font-black text-xl text-slate-700">27 000 Ar</div>
+                    </div>
+
+                    <div onclick="selectOption(50000)" class="option-card cursor-pointer border-2 border-gray-200 rounded-xl p-4 flex justify-between items-center hover:border-blue-300 transition" id="opt-50000">
+                        <div class="text-left"><div class="font-bold text-slate-800">Premium 6 Mois</div><div class="text-xs text-gray-500">Best Seller</div></div>
+                        <div class="font-black text-xl text-slate-700">50 000 Ar</div>
+                    </div>
+                </div>
+
+                <div id="instruction-box" class="hidden bg-blue-50 p-6 rounded-xl border border-blue-200 text-left animate-fade-in mb-8">
+                    <h3 class="font-bold text-blue-800 mb-2"><i class="fas fa-info-circle mr-2"></i>Paiement MVola</h3>
+                    <p class="text-sm text-blue-900 mb-2">Envoyez <span id="display-amount" class="font-black text-lg">...</span> au :</p>
+                    <div class="bg-white p-3 rounded-lg border border-blue-100 text-center mb-4">
+                        <div class="text-2xl font-mono font-black text-slate-800">034 91 207 26</div>
+                        <div class="text-xs font-bold text-gray-400 uppercase">Ndrato</div>
+                    </div>
+                    <label class="flex items-center gap-3 cursor-pointer">
+                        <input type="checkbox" id="check-paid" class="w-5 h-5 text-blue-600 rounded focus:ring-blue-500" onchange="toggleForm()">
+                        <span class="font-bold text-sm text-slate-700">J'ai effectué le paiement</span>
+                    </label>
+                </div>
+            </div>
+
+            <div id="payment-form" class="hidden max-w-md w-full animate-fade-in text-left">
+                <h3 class="font-bold text-lg mb-4 text-center">Détails de la transaction</h3>
+                <div class="space-y-4">
+                    <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Nom Payeur</label><input type="text" id="pay-nom" class="w-full p-3 border rounded-lg bg-gray-50" placeholder="Ex: RAKOTO"></div>
+                    <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Téléphone</label><input type="tel" id="pay-tel" class="w-full p-3 border rounded-lg bg-gray-50" placeholder="034..."></div>
+                    <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Référence Mvola</label><input type="text" id="pay-ref" class="w-full p-3 border rounded-lg bg-gray-50 text-blue-600 font-bold" placeholder="123456789"></div>
+                    <button onclick="submitPayment()" id="btn-submit" class="w-full py-4 bg-green-500 hover:bg-green-600 text-white font-bold rounded-xl shadow-lg">Envoyer la preuve</button>
+                    <button onclick="resetSelection()" class="w-full py-2 text-gray-400 text-sm">Annuler</button>
+                </div>
+            </div>
+
+            <div id="waiting-screen" class="hidden max-w-md w-full text-center">
+                <div class="w-20 h-20 bg-yellow-50 text-yellow-500 rounded-full flex items-center justify-center mx-auto mb-6 text-3xl animate-pulse"><i class="fas fa-hourglass-half"></i></div>
+                <h3 class="text-xl font-black text-slate-800 mb-2">Paiement envoyé !</h3>
+                <p class="text-gray-500 mb-6">Validation en cours (Automatique)...</p>
+                <div class="bg-yellow-50 text-yellow-800 p-4 rounded-xl text-sm font-bold border border-yellow-100"><i class="fas fa-sync fa-spin mr-2"></i> Ne fermez pas...</div>
+            </div>
         </div>
 
         <div id="reader-container" class="w-full h-full relative hidden">
@@ -46,33 +107,132 @@
         </div>
     </div>
 
-    <div id="layout-footer"></div> <script type="module">
+    <div id="layout-footer"></div>
+
+    <script type="module">
         import { createClient } from "https://esm.run/@supabase/supabase-js";
+        // CLES SUPABASE
         const SUPABASE_URL = "https://jdxdthxztokjhprwynyf.supabase.co";
         const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpkeGR0aHh6dG9ramhwcnd5bnlmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcxODAyNzgsImV4cCI6MjA4Mjc1NjI3OH0.zal-p0RKJ-PYGvzal1K9-asbUbyQmqG5OtPTWnoHQmI";
         const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
-        
-        window.rendition = null;
+
+        window.book = null; window.rendition = null;
+        let bookData = null; let userData = null; let selectedAmount = 0; let pollingInterval = null;
+
         window.onload = async function() {
             const id = new URLSearchParams(window.location.search).get('id');
-            if(!id) window.location.href='biblio.html';
-            const { data } = await supabase.from('lessons').select('*').eq('id', id).single();
-            if(data) {
-                document.getElementById('book-title').innerText = data.titre;
-                // SIMULATION LECTURE DIRECTE (Remettre logique paywall ici)
-                openReader(data.file_url);
+            if (!id) { window.location.href = 'biblio.html'; return; }
+
+            // 1. AUTH CHECK
+            const { data: { session } } = await supabase.auth.getSession();
+            if(!session) { 
+                alert("Veuillez vous connecter pour lire ce livre.");
+                window.location.href = 'login.html'; 
+                return;
             }
+            userData = session.user;
+
+            // 2. GET BOOK
+            const { data, error } = await supabase.from('lessons').select('*').eq('id', id).single();
+            if (error || !data) return alert("Livre introuvable");
+            bookData = data;
+            document.getElementById('book-title').innerText = data.titre;
+
+            // 3. CHECK RIGHTS
+            checkRights();
         };
+
+        async function checkRights() {
+            // Check Admin
+            const ADMIN_EMAIL = "volandrato@gmail.com"; // <-- REMETTRE VOTRE EMAIL ADMIN ICI
+            if (userData.email === ADMIN_EMAIL) { openReader(bookData.file_url); return; }
+
+            // Check Premium
+            const { data: profile } = await supabase.from('profiles').select('date_fin_abonnement').eq('id', userData.id).single();
+            if (profile && profile.date_fin_abonnement && new Date(profile.date_fin_abonnement) > new Date()) {
+                openReader(bookData.file_url); return;
+            }
+
+            // Check Achat Unitaire
+            const { data: achat } = await supabase.from('achats').select('*').eq('user_id', userData.id).eq('document_id', bookData.id).eq('statut', 'valide').maybeSingle();
+            if (achat) { openReader(bookData.file_url); return; }
+
+            // Check Pending
+            const { data: pending } = await supabase.from('achats').select('*').eq('user_id', userData.id).eq('statut', 'en_attente').limit(1).maybeSingle();
+            if (pending) { showWaitingScreen(); startPolling(); } 
+            else { showPaywall(); }
+        }
+
+        // --- UI PAIEMENT ---
+        window.selectOption = function(amount) {
+            selectedAmount = amount;
+            document.querySelectorAll('.option-card').forEach(el => el.classList.remove('selected'));
+            document.getElementById('opt-'+amount).classList.add('selected');
+            document.getElementById('display-amount').innerText = amount + " Ar";
+            document.getElementById('instruction-box').classList.remove('hidden');
+        }
+        window.toggleForm = function() {
+            if(document.getElementById('check-paid').checked) {
+                document.getElementById('payment-step-1').classList.add('hidden');
+                document.getElementById('payment-form').classList.remove('hidden');
+            }
+        }
+        window.resetSelection = function() {
+            document.getElementById('payment-form').classList.add('hidden');
+            document.getElementById('payment-step-1').classList.remove('hidden');
+            document.getElementById('check-paid').checked = false;
+        }
+        window.submitPayment = async function() {
+            const nom = document.getElementById('pay-nom').value;
+            const ref = document.getElementById('pay-ref').value;
+            const tel = document.getElementById('pay-tel').value;
+            if(!nom || !ref) return alert("Remplissez les champs !");
+            
+            await supabase.from('achats').insert([{
+                user_id: userData.id, document_id: bookData.id, montant: selectedAmount,
+                nom_payeur: nom, tel_payeur: tel, ref_transaction: ref, statut: 'en_attente'
+            }]);
+            showWaitingScreen(); startPolling();
+        }
+
+        function showPaywall() {
+            document.getElementById('loading-screen').classList.add('hidden');
+            document.getElementById('paywall').classList.remove('hidden');
+        }
+        function showWaitingScreen() {
+            document.getElementById('paywall').classList.remove('hidden');
+            document.getElementById('payment-step-1').classList.add('hidden');
+            document.getElementById('payment-form').classList.add('hidden');
+            document.getElementById('waiting-screen').classList.remove('hidden');
+        }
+
+        // --- POLLING & READER ---
+        function startPolling() {
+            pollingInterval = setInterval(async () => {
+                const { data: achat } = await supabase.from('achats').select('statut').eq('user_id', userData.id).eq('document_id', bookData.id).eq('statut', 'valide').maybeSingle();
+                const { data: profile } = await supabase.from('profiles').select('date_fin_abonnement').eq('id', userData.id).single();
+                
+                if(achat || (profile && new Date(profile.date_fin_abonnement) > new Date())) {
+                    clearInterval(pollingInterval);
+                    document.getElementById('paywall').classList.add('hidden');
+                    openReader(bookData.file_url);
+                }
+            }, 5000);
+        }
+
         async function openReader(url) {
+            document.getElementById('loading-screen').classList.remove('hidden');
+            document.getElementById('paywall').classList.add('hidden');
             try {
                 const response = await fetch(url);
                 const buffer = await response.arrayBuffer();
                 document.getElementById('loading-screen').classList.add('hidden');
                 document.getElementById('reader-container').classList.remove('hidden');
-                const book = ePub(buffer);
-                window.rendition = book.renderTo("viewer", { width: "100%", height: "100%", flow: "paginated" });
+                document.getElementById('reader-controls').classList.remove('hidden');
+                window.book = ePub(buffer);
+                window.rendition = window.book.renderTo("viewer", { width: "100%", height: "100%", flow: "paginated" });
                 window.rendition.display();
-            } catch(e) { alert("Erreur chargement livre"); }
+            } catch (e) { alert("Erreur chargement livre : " + e.message); }
         }
         window.changeFontSize = function(v) { if(window.rendition) window.rendition.themes.fontSize((100+v*10)+"%"); }
     </script>
