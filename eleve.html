@@ -18,7 +18,7 @@
         details > summary::-webkit-details-marker { display: none; }
         details[open] > summary .arrow { transform: rotate(90deg); }
         .tree-level { border-left: 2px solid #e2e8f0; margin-left: 10px; padding-left: 10px; }
-        /* Ajout pour s'assurer que le menu passe au dessus */
+        /* Z-index très haut pour le menu mobile */
         aside.fixed { z-index: 9999; }
     </style>
 </head>
@@ -31,7 +31,7 @@
                 <span class="font-black text-xl text-blue-900">School<span class="text-blue-600">AI</span></span>
             </a>
             <div class="flex items-center gap-3">
-                <a href="eleve.html" title="Recharger" class="text-xs font-bold text-gray-400 hover:text-blue-600"><i class="fas fa-sync"></i></a>
+                <a href="eleve.html" title="Recharger tout" class="text-xs font-bold text-gray-400 hover:text-blue-600"><i class="fas fa-sync"></i></a>
                 <button onclick="toggleSidebar()" class="md:hidden text-gray-500 hover:text-red-500 text-xl px-2">
                     <i class="fas fa-times"></i>
                 </button>
@@ -41,10 +41,13 @@
         <div class="p-4 bg-gray-50/50">
             <div class="relative">
                 <i class="fas fa-search absolute left-3 top-3 text-gray-400 text-sm"></i>
-                <input type="text" id="search-lesson" placeholder="Rechercher..." class="w-full pl-9 pr-4 py-3 bg-white border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 ring-blue-500 transition shadow-sm" onkeyup="handleSearch()">
+                <input type="text" id="search-lesson" placeholder="Rechercher..." class="w-full pl-9 pr-4 py-3 bg-white border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 ring-blue-500 transition shadow-sm" onkeyup="window.handleSearch()">
             </div>
             <div id="active-filter-badge" class="hidden mt-2">
-                <span class="bg-blue-100 text-blue-700 text-xs font-bold px-2 py-1 rounded-lg flex items-center justify-between"><span id="filter-name">Filtre</span><button onclick="window.location.href='eleve.html'" class="ml-2 hover:text-blue-900"><i class="fas fa-times"></i></button></span>
+                <span class="bg-blue-100 text-blue-700 text-xs font-bold px-2 py-1 rounded-lg flex items-center justify-between">
+                    <span id="filter-name">Filtre</span>
+                    <button onclick="window.location.href='eleve.html'" class="ml-2 hover:text-blue-900"><i class="fas fa-times"></i></button>
+                </span>
             </div>
         </div>
 
@@ -76,10 +79,14 @@
                 <div class="inline-block p-6 rounded-full bg-white shadow-xl mb-8 transform hover:scale-105 transition duration-500"><span class="text-6xl">🎓</span></div>
                 <h1 class="text-3xl md:text-5xl font-black text-slate-800 mb-6 tracking-tight">Bienvenue !</h1>
                 <p class="text-lg md:text-xl text-slate-500 mb-10 max-w-xl mx-auto leading-relaxed">Sélectionnez un cours dans le menu pour commencer.</p>
-                
                 <button onclick="toggleSidebar()" class="md:hidden w-full py-4 bg-blue-600 text-white rounded-xl font-bold shadow-lg shadow-blue-200 mb-4 animate-bounce flex justify-center items-center gap-2">
                     <i class="fas fa-list"></i> Voir les cours
                 </button>
+            </div>
+
+            <div id="main-loader" class="hidden text-center py-20">
+                <i class="fas fa-circle-notch fa-spin text-4xl text-blue-500 mb-4"></i>
+                <p class="text-gray-500">Chargement du contenu...</p>
             </div>
 
             <div id="lesson-content" class="hidden max-w-5xl mx-auto pb-32">
@@ -135,13 +142,11 @@
     </main>
 
     <script>
-        // Fonction pour afficher/cacher la sidebar sur mobile
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
             sidebar.classList.toggle('hidden');
         }
 
-        // Fonction pour changer les onglets
         function switchTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
             document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
@@ -149,21 +154,17 @@
             document.getElementById('btn-' + tabId).classList.add('active');
         }
 
-        // Fonction Chat
         function toggleChat() { document.getElementById('chat-window').classList.toggle('hidden'); }
 
-        // Fonction Quiz
         function checkQuizAnswer(qIdx, cIdx, element) {
             if(!window.currentLessonData) return;
             const questionData = window.currentLessonData.quiz.questions[qIdx];
             const choiceText = questionData.choix[cIdx];
             const isCorrect = questionData.reponses.includes(choiceText);
             const feedbackEl = document.getElementById(`feedback-${qIdx}`);
-            
             feedbackEl.classList.remove('hidden');
             element.parentElement.querySelectorAll('.quiz-option').forEach(el => el.classList.add('opacity-50'));
             element.classList.remove('opacity-50');
-            
             if(isCorrect) {
                 element.style.backgroundColor = '#dcfce7'; element.style.borderColor = '#22c55e';
                 feedbackEl.className = "mt-2 p-3 rounded font-bold text-center bg-green-100 text-green-800";
@@ -189,36 +190,83 @@
 
         let allLessons = []; 
         window.jsPDF = window.jspdf.jsPDF;
-        window.currentLessonData = null; // Rendre accessible globalement
+        window.currentLessonData = null;
 
-        // Chargement initial
-        window.onload = async function() {
-            try {
-                const { data, error } = await supabase.from('lessons').select('*').neq('type_contenu', 'livre_bibliotheque').eq('est_publie', true).order('titre', { ascending: true });
-                
-                if(data) {
-                    allLessons = data;
-                    const urlParams = new URLSearchParams(window.location.search);
-                    const filterParam = urlParams.get('filter');
+        // --- DÉFINITION GLOBALE DES FONCTIONS ---
 
-                    if (filterParam) {
-                        const filteredData = allLessons.filter(l => l.niveau === filterParam);
-                        document.getElementById('active-filter-badge').classList.remove('hidden');
-                        document.getElementById('filter-name').innerText = filterParam;
-                        buildAndRenderTree(filteredData);
-                    } else {
-                        buildAndRenderTree(allLessons);
-                    }
-                } else { 
-                    document.getElementById('lesson-sidebar-content').innerHTML = '<p class="text-center text-gray-400 mt-4">Aucun cours disponible.</p>'; 
-                }
-            } catch (err) {
-                console.error("Erreur connexion:", err);
-                document.getElementById('lesson-sidebar-content').innerHTML = '<p class="text-center text-red-400 mt-4">Erreur de connexion.</p>';
+        // 1. Fonction principale pour charger un cours
+        window.fetchAndDisplayLesson = async function(id) {
+            // A. INTERFACE : Réaction immédiate
+            // Si on est sur mobile, on ferme le menu TOUT DE SUITE
+            if(window.innerWidth < 768) {
+                document.getElementById('sidebar').classList.add('hidden');
             }
-        };
+            
+            // On cache l'accueil et le contenu précédent, on affiche le loader
+            document.getElementById('welcome-screen').classList.add('hidden'); 
+            document.getElementById('lesson-content').classList.add('hidden');
+            document.getElementById('main-loader').classList.remove('hidden');
 
-        // Construction de l'arbre des cours
+            // B. DONNÉES : Chargement Supabase
+            try {
+                const { data, error } = await supabase.from('lessons').select('*').eq('id', id).single(); 
+                
+                document.getElementById('main-loader').classList.add('hidden'); // Cacher le loader
+
+                if (error || !data) return alert("Erreur lors du chargement du cours.");
+
+                // C. AFFICHAGE
+                document.getElementById('lesson-content').classList.remove('hidden');
+                
+                document.getElementById('lesson-niveau').innerText = data.niveau || 'Niveau'; 
+                document.getElementById('lesson-matiere').innerText = data.matiere || 'Matière'; 
+                document.getElementById('lesson-title').innerText = data.titre;
+                
+                if(data.audio_url) { 
+                    document.getElementById('audio-player-container').classList.remove('hidden'); 
+                    document.getElementById('audio-player').src = data.audio_url; 
+                } else { 
+                    document.getElementById('audio-player-container').classList.add('hidden'); 
+                }
+                
+                try { 
+                    const jsonContent = JSON.parse(data.contenu_html); 
+                    window.currentLessonData = jsonContent; 
+                    renderLessonFromJSON(jsonContent); 
+                } catch (e) { 
+                    window.currentLessonData = { simple_text: data.contenu_html }; 
+                    renderLessonSimple(data.contenu_html); 
+                } 
+                switchTab('lecon');
+
+            } catch(err) {
+                console.error(err);
+                document.getElementById('main-loader').classList.add('hidden');
+                alert("Erreur réseau ou base de données.");
+            }
+        }
+
+        // 2. Fonction de recherche
+        window.handleSearch = function() {
+            const query = document.getElementById('search-lesson').value.toLowerCase();
+            if (query.length === 0) { 
+                const urlParams = new URLSearchParams(window.location.search); 
+                const filterParam = urlParams.get('filter'); 
+                if(filterParam) buildAndRenderTree(allLessons.filter(l => l.niveau === filterParam)); 
+                else buildAndRenderTree(allLessons); 
+                return; 
+            }
+            const filtered = allLessons.filter(l => (l.titre && l.titre.toLowerCase().includes(query)) || (l.matiere && l.matiere.toLowerCase().includes(query)));
+            const container = document.getElementById('lesson-sidebar-content'); container.innerHTML = '';
+            if(filtered.length === 0) { container.innerHTML = '<p class="text-gray-400 text-sm text-center mt-4">Aucun résultat.</p>'; return; }
+            
+            // Notez l'utilisation de onclick="window.fetchAndDisplayLesson(...)" explicite ici
+            filtered.forEach(l => { 
+                container.innerHTML += `<div onclick="window.fetchAndDisplayLesson(${l.id})" class="p-3 mx-1 rounded-lg hover:bg-blue-50 cursor-pointer border-b border-gray-50 group"><div class="text-[10px] uppercase font-bold text-gray-400 mb-1">${l.niveau} > ${l.matiere}</div><div class="text-sm font-bold text-slate-700 group-hover:text-blue-600">${l.titre}</div></div>`; 
+            });
+        }
+
+        // 3. Construction de l'arbre
         function buildAndRenderTree(lessons) {
             const container = document.getElementById('lesson-sidebar-content'); 
             container.innerHTML = '';
@@ -250,11 +298,14 @@
                         matSummary.innerHTML = `<i class="fas fa-chevron-right text-[10px] arrow text-gray-300 transition"></i> ${mat}`;
                         
                         const matContent = document.createElement('div'); matContent.className = "ml-4 mt-1 space-y-1";
+                        
                         tree[niv][cls][mat].forEach(l => { 
+                            // Utilisation de createElement pour éviter les erreurs de string
                             const lessonLink = document.createElement('div'); 
                             lessonLink.className = "text-xs p-2 rounded cursor-pointer hover:bg-blue-50 text-slate-600 hover:text-blue-700 transition truncate border-l-2 border-transparent hover:border-blue-500"; 
                             lessonLink.innerText = l.titre; 
-                            lessonLink.onclick = () => fetchAndDisplayLesson(l.id); 
+                            // BINDING DIRECT
+                            lessonLink.onclick = function() { window.fetchAndDisplayLesson(l.id); };
                             matContent.appendChild(lessonLink); 
                         });
                         matDetails.appendChild(matSummary); matDetails.appendChild(matContent); clsContent.appendChild(matDetails);
@@ -265,53 +316,7 @@
             }
         }
 
-        // Recherche
-        window.handleSearch = function() {
-            const query = document.getElementById('search-lesson').value.toLowerCase();
-            if (query.length === 0) { 
-                const urlParams = new URLSearchParams(window.location.search); 
-                const filterParam = urlParams.get('filter'); 
-                if(filterParam) buildAndRenderTree(allLessons.filter(l => l.niveau === filterParam)); 
-                else buildAndRenderTree(allLessons); 
-                return; 
-            }
-            const filtered = allLessons.filter(l => (l.titre && l.titre.toLowerCase().includes(query)) || (l.matiere && l.matiere.toLowerCase().includes(query)));
-            const container = document.getElementById('lesson-sidebar-content'); container.innerHTML = '';
-            if(filtered.length === 0) { container.innerHTML = '<p class="text-gray-400 text-sm text-center mt-4">Aucun résultat.</p>'; return; }
-            filtered.forEach(l => { container.innerHTML += `<div onclick="window.fetchAndDisplayLesson(${l.id})" class="p-3 mx-1 rounded-lg hover:bg-blue-50 cursor-pointer border-b border-gray-50 group"><div class="text-[10px] uppercase font-bold text-gray-400 mb-1">${l.niveau} > ${l.matiere}</div><div class="text-sm font-bold text-slate-700 group-hover:text-blue-600">${l.titre}</div></div>`; });
-        }
-
-        // Affichage d'un cours
-        window.fetchAndDisplayLesson = async function(id) {
-            // UI : Fermer sidebar mobile + Switcher écran
-            document.getElementById('welcome-screen').classList.add('hidden'); 
-            document.getElementById('lesson-content').classList.remove('hidden'); 
-            if(window.innerWidth < 768) toggleSidebar(); 
-
-            // Data : Récupérer cours
-            const { data, error } = await supabase.from('lessons').select('*').eq('id', id).single(); 
-            if (error || !data) return alert("Erreur chargement cours");
-
-            // Remplissage
-            document.getElementById('lesson-niveau').innerText = data.niveau || 'Niveau'; 
-            document.getElementById('lesson-matiere').innerText = data.matiere || 'Matière'; 
-            document.getElementById('lesson-title').innerText = data.titre;
-            
-            if(data.audio_url) { document.getElementById('audio-player-container').classList.remove('hidden'); document.getElementById('audio-player').src = data.audio_url; } 
-            else { document.getElementById('audio-player-container').classList.add('hidden'); }
-            
-            try { 
-                const jsonContent = JSON.parse(data.contenu_html); 
-                window.currentLessonData = jsonContent; 
-                renderLessonFromJSON(jsonContent); 
-            } catch (e) { 
-                window.currentLessonData = { simple_text: data.contenu_html }; 
-                renderLessonSimple(data.contenu_html); 
-            } 
-            switchTab('lecon');
-        }
-
-        // Rendu HTML du JSON
+        // 4. Rendu Contenu
         function renderLessonFromJSON(json) {
             const c = json.contenu || {}; 
             document.getElementById('lesson-subtitle').innerText = c.sous_titre || '';
@@ -336,7 +341,6 @@
 
         function renderLessonSimple(htmlContent) { document.getElementById('lecon-body').innerHTML = htmlContent; document.getElementById('revisions-list').innerHTML = "<li>Contenu non structuré.</li>"; document.getElementById('vocab-grid').innerHTML = ""; document.getElementById('exercices-list').innerHTML = "<p>Pas d'exercices.</p>"; document.getElementById('quiz-container').innerHTML = "<p>Pas de quiz.</p>"; }
 
-        // Génération PDF
         window.generatePDF = function() { 
             if(!window.currentLessonData || !window.currentLessonData.contenu) return alert("Données insuffisantes."); 
             const doc = new jsPDF(); const c = window.currentLessonData.contenu; 
@@ -351,7 +355,6 @@
             doc.save(`fiche_${c.titre}.pdf`); 
         }
 
-        // Chatbot
         window.sendMessage = async function() { 
             const input = document.getElementById('chat-input'); const msg = input.value; if (!msg) return; 
             const box = document.getElementById('chatbox'); box.innerHTML += `<div class="text-right mb-4"><span class="bg-blue-600 text-white px-4 py-2 rounded-xl text-sm">${msg}</span></div>`; 
@@ -364,6 +367,36 @@
                 box.scrollTop = box.scrollHeight; 
             } catch(e){ console.error(e); } 
         }
+
+        // --- EXÉCUTION AU CHARGEMENT ---
+        window.onload = async function() {
+            try {
+                // Requête Supabase
+                const { data, error } = await supabase.from('lessons').select('*').neq('type_contenu', 'livre_bibliotheque').eq('est_publie', true).order('titre', { ascending: true });
+                
+                if(data) {
+                    allLessons = data;
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const filterParam = urlParams.get('filter'); // Récupère "Lycée" proprement
+
+                    if (filterParam) {
+                        // On filtre si le paramètre existe
+                        const filteredData = allLessons.filter(l => l.niveau === filterParam);
+                        document.getElementById('active-filter-badge').classList.remove('hidden');
+                        document.getElementById('filter-name').innerText = filterParam;
+                        buildAndRenderTree(filteredData);
+                    } else {
+                        buildAndRenderTree(allLessons);
+                    }
+                } else { 
+                    document.getElementById('lesson-sidebar-content').innerHTML = '<p class="text-center text-gray-400 mt-4">Aucun cours disponible.</p>'; 
+                }
+            } catch (err) {
+                console.error("Erreur connexion:", err);
+                document.getElementById('lesson-sidebar-content').innerHTML = '<p class="text-center text-red-400 mt-4">Erreur de connexion.</p>';
+            }
+        };
+
     </script>
 </body>
 </html>
