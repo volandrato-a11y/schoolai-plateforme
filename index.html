@@ -3,89 +3,178 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SchoolAI - Accueil</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <script src="layout.js"></script> <style>
-        .hero-bg { background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); }
-        .card-hover:hover { transform: translateY(-8px); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); }
-        .blob { position: absolute; filter: blur(40px); z-index: 0; opacity: 0.4; }
-        .animate-fade-in-up { animation: fadeInUp 0.8s ease-out; }
-        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-    </style>
-</head>
-<body class="bg-white font-sans text-slate-800 flex flex-col min-h-screen">
+    <title>Site de Cours</title>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-    <div id="layout-nav"></div> <header class="hero-bg py-12 lg:py-20 relative overflow-hidden flex-1">
-        <div class="blob bg-blue-300 w-96 h-96 rounded-full top-0 left-0 -translate-x-1/2 -translate-y-1/2"></div>
-        <div class="blob bg-purple-300 w-96 h-96 rounded-full bottom-0 right-0 translate-x-1/2 translate-y-1/2"></div>
+    <style>
+        /* --- 1. CSS GLOBAL --- */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+            scroll-behavior: smooth; /* Pour un défilement fluide */
+        }
 
-        <div class="max-w-7xl mx-auto px-6 relative z-10 text-center">
-            <div class="mb-12 animate-fade-in-up">
-                <div class="inline-block px-4 py-1.5 bg-white border border-blue-100 rounded-full text-blue-600 font-bold text-xs mb-6 uppercase tracking-wide shadow-sm">
-                    🎓 École Numérique Gratuite
-                </div>
-                <h1 class="text-3xl lg:text-5xl font-black text-slate-900 mb-6">
-                    L'école dans votre poche
-                </h1>
-                <p class="text-lg text-slate-600 max-w-2xl mx-auto mb-8">
-                    Sélectionnez votre classe et commencez à apprendre immédiatement avec l'IA.
-                </p>
-                
-                <div id="auth-buttons" class="flex justify-center gap-4 mb-8">
-                    <a href="inscription.html" class="bg-blue-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:bg-blue-700 transition">S'inscrire</a>
-                    <a href="login.html" class="bg-white text-blue-600 border border-blue-200 font-bold py-3 px-6 rounded-xl hover:bg-gray-50 transition">Connexion</a>
-                </div>
-            </div>
+        body {
+            background-color: #f4f4f4;
+        }
+
+        /* --- 2. HEADER & NAVIGATION (PC) --- */
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 15px 5%;
+            background: #ffffff;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1000; /* Toujours au-dessus */
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+            text-decoration: none;
+        }
+
+        .navbar a {
+            font-size: 16px;
+            color: #333;
+            text-decoration: none;
+            margin-left: 25px;
+            font-weight: 500;
+            transition: 0.3s;
+        }
+
+        .navbar a:hover {
+            color: #007bff;
+        }
+
+        /* L'icône menu est cachée sur PC */
+        #menu-icon {
+            font-size: 28px;
+            color: #333;
+            display: none;
+            cursor: pointer;
+        }
+
+        /* --- 3. SECTIONS (CONTENU) --- */
+        section {
+            min-height: 100vh; /* Prend toute la hauteur de l'écran */
+            padding: 100px 5% 20px; /* Padding-top de 100px pour ne pas être caché par le header */
+        }
+
+        #accueil { background-color: #e3f2fd; }
+        #cours { background-color: #fff3e0; }
+        #contact { background-color: #e8f5e9; }
+
+        h1 { margin-bottom: 20px; }
+
+        /* --- 4. MEDIA QUERIES (MOBILE) --- */
+        @media (max-width: 768px) {
             
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 max-w-7xl mx-auto px-2">
-                <a href="eleve.html?filter=Primaire" class="block group">
-                    <div class="bg-white p-6 rounded-2xl border border-orange-100 card-hover transition duration-300 shadow-md">
-                        <div class="w-12 h-12 bg-orange-50 rounded-full flex items-center justify-center text-orange-500 text-2xl mb-3 mx-auto"><i class="fas fa-shapes"></i></div>
-                        <h3 class="font-black text-slate-800">Primaire</h3>
-                    </div>
-                </a>
-                <a href="eleve.html?filter=Collège" class="block group">
-                    <div class="bg-white p-6 rounded-2xl border border-blue-100 card-hover transition duration-300 shadow-md">
-                        <div class="w-12 h-12 bg-blue-50 rounded-full flex items-center justify-center text-blue-600 text-2xl mb-3 mx-auto"><i class="fas fa-atom"></i></div>
-                        <h3 class="font-black text-slate-800">Collège</h3>
-                    </div>
-                </a>
-                <a href="eleve.html?filter=Lycée" class="block group">
-                    <div class="bg-white p-6 rounded-2xl border border-purple-100 card-hover transition duration-300 shadow-md">
-                        <div class="w-12 h-12 bg-purple-50 rounded-full flex items-center justify-center text-purple-600 text-2xl mb-3 mx-auto"><i class="fas fa-graduation-cap"></i></div>
-                        <h3 class="font-black text-slate-800">Lycée</h3>
-                    </div>
-                </a>
-                <a href="eleve.html?filter=Formation Pro" class="block group">
-                    <div class="bg-white p-6 rounded-2xl border border-slate-200 card-hover transition duration-300 shadow-md">
-                        <div class="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center text-slate-700 text-2xl mb-3 mx-auto"><i class="fas fa-briefcase"></i></div>
-                        <h3 class="font-black text-slate-800">Pro</h3>
-                    </div>
-                </a>
-            </div>
-        </div>
-    </header>
+            /* On affiche l'icône burger */
+            #menu-icon {
+                display: block;
+            }
 
-    <div id="layout-footer"></div> <script type="module">
-        import { createClient } from "https://esm.run/@supabase/supabase-js";
-        // CLES SUPABASE
-        const SUPABASE_URL = "https://jdxdthxztokjhprwynyf.supabase.co";
-        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpkeGR0aHh6dG9ramhwcnd5bnlmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcxODAyNzgsImV4cCI6MjA4Mjc1NjI3OH0.zal-p0RKJ-PYGvzal1K9-asbUbyQmqG5OtPTWnoHQmI";
-        const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+            /* On transforme la navbar pour mobile */
+            .navbar {
+                position: absolute;
+                top: 100%;
+                left: 0;
+                width: 100%;
+                background: #ffffff;
+                border-top: 1px solid #ddd;
+                display: none; /* Caché par défaut */
+                flex-direction: column;
+                padding: 1rem 0;
+                box-shadow: 0 5px 10px rgba(0,0,0,0.1);
+            }
 
-        async function checkAuth() {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (session) {
-                document.getElementById('auth-buttons').innerHTML = `
-                    <div class="flex flex-col items-center gap-2">
-                        <span class="font-bold text-blue-900">Bonjour ${session.user.user_metadata.prenom || 'élève'} !</span>
-                        <button onclick="logout()" class="text-sm text-red-500 hover:underline">Se déconnecter</button>
-                    </div>`;
+            /* Cette classe 'active' sera ajoutée par le Javascript */
+            .navbar.active {
+                display: flex;
+            }
+
+            .navbar a {
+                display: block;
+                margin: 15px 0;
+                text-align: center; /* Centrer le texte sur mobile */
+                font-size: 20px; /* Plus gros pour le doigt */
             }
         }
-        window.logout = async function() { await supabase.auth.signOut(); window.location.reload(); }
-        checkAuth();
+    </style>
+</head>
+<body>
+
+    <header>
+        <a href="#accueil" class="logo">E-Learning.</a>
+        
+        <div id="menu-icon">
+            <i class="fa-solid fa-bars"></i>
+        </div>
+
+        <nav class="navbar">
+            <a href="#accueil" class="nav-link">Accueil</a>
+            <a href="#cours" class="nav-link">Cours</a>
+            <a href="#contact" class="nav-link">Contact</a>
+        </nav>
+    </header>
+
+    <section id="accueil">
+        <h1>Bienvenue</h1>
+        <p>Ceci est la page d'accueil. Essaye de réduire la fenêtre ou d'ouvrir sur mobile.</p>
+    </section>
+
+    <section id="cours">
+        <h1>Nos Cours</h1>
+        <p>C'est ici que tu voulais arriver ! Si tu lis ceci, le lien fonctionne.</p>
+        <br>
+        <ul>
+            <li>Cours 1 : Introduction HTML</li>
+            <li>Cours 2 : Maîtriser CSS</li>
+            <li>Cours 3 : Javascript pour débutants</li>
+        </ul>
+    </section>
+
+    <section id="contact">
+        <h1>Contact</h1>
+        <p>Pied de page et informations.</p>
+    </section>
+
+    <script>
+        // Sélection des éléments
+        const menuIcon = document.querySelector('#menu-icon');
+        const navbar = document.querySelector('.navbar');
+        const navLinks = document.querySelectorAll('.nav-link');
+
+        // 1. Ouvrir / Fermer le menu au clic sur l'icône
+        menuIcon.onclick = () => {
+            menuIcon.classList.toggle('fa-x'); // Change l'icône en croix (optionnel)
+            navbar.classList.toggle('active'); // Affiche ou cache le menu
+        };
+
+        // 2. Fermer le menu AUTOMATIQUEMENT quand on clique sur un lien (ex: Cours)
+        navLinks.forEach(link => {
+            link.addEventListener('click', () => {
+                navbar.classList.remove('active'); // Enlève le menu
+                menuIcon.classList.remove('fa-x'); // Remet l'icône burger
+            });
+        });
+
+        // 3. Fermer le menu si on scroll (optionnel mais pratique)
+        window.onscroll = () => {
+            navbar.classList.remove('active');
+            menuIcon.classList.remove('fa-x');
+        };
     </script>
+
 </body>
 </html>
