@@ -46,8 +46,9 @@
                     <div id="library-options" class="hidden mt-6 pt-6 border-t border-gray-100 animate-fade-in bg-purple-50 p-4 rounded-xl border border-purple-100">
                         <h3 class="font-bold text-sm text-purple-700 mb-3"><i class="fas fa-book mr-2"></i>Info Bibliothèque</h3>
                         <div class="space-y-3">
-                            <input type="text" id="meta-auteur" placeholder="Auteur" class="w-full p-3 border border-purple-200 rounded-lg text-sm bg-white">
-                            <input type="text" id="meta-cover" placeholder="URL Image Couverture (https://...)" class="w-full p-3 border border-purple-200 rounded-lg text-sm bg-white">
+                            <input type="text" id="meta-auteur" placeholder="Auteur (ex: Hugo)" class="w-full p-3 border border-purple-200 rounded-lg text-sm bg-white">
+                            <input type="text" id="meta-cover" placeholder="URL Image Couverture" class="w-full p-3 border border-purple-200 rounded-lg text-sm bg-white">
+                            <textarea id="meta-resume" rows="3" placeholder="Petit résumé du livre..." class="w-full p-3 border border-purple-200 rounded-lg text-sm bg-white"></textarea>
                             <select id="meta-genre" class="w-full p-3 border border-purple-200 rounded-lg text-sm bg-white font-bold text-gray-600">
                                 <option value="">-- Catégorie --</option>
                                 <option value="Roman">📖 Roman</option><option value="Manuel">📘 Manuel</option><option value="Cours">🎓 Cours</option><option value="Jeunesse">🧸 Jeunesse</option><option value="BD">💭 BD/Manga</option>
@@ -60,7 +61,7 @@
                             <input type="checkbox" id="check-publie" class="h-5 w-5 text-blue-600 rounded focus:ring-blue-500 border-gray-300">
                             <span class="text-slate-700 font-bold text-sm">Publier immédiatement ?</span>
                         </label>
-                        <p class="text-xs text-gray-400 mt-1 ml-8">Décoché = Brouillon (Invisible élèves)</p>
+                        <p class="text-xs text-gray-400 mt-1 ml-8">Décoché = Brouillon</p>
                     </div>
 
                     <div class="relative py-6"><div class="absolute inset-0 flex items-center"><div class="w-full border-t border-gray-100"></div></div><div class="relative flex justify-center text-xs uppercase"><span class="bg-white px-2 text-gray-400 font-bold">Ou créer nouveau</span></div></div>
@@ -144,8 +145,8 @@
         import { GoogleGenerativeAI } from "https://esm.run/@google/generative-ai";
         import { createClient } from "https://esm.run/@supabase/supabase-js";
 
-        // --- CONFIGURATION ---
-        const API_KEY_GEMINI = "AIzaSyCawLuudWet7lr3cGMLoUszYE5VCp7y7Ew"; 
+        // CONFIGURATION
+        const API_KEY_GEMINI = "TOKEN_REMPLACEMENT_ICI"; 
         const SUPABASE_URL = "https://jdxdthxztokjhprwynyf.supabase.co";
         const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpkeGR0aHh6dG9ramhwcnd5bnlmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcxODAyNzgsImV4cCI6MjA4Mjc1NjI3OH0.zal-p0RKJ-PYGvzal1K9-asbUbyQmqG5OtPTWnoHQmI";
         const ADMIN_EMAIL = "volandrato@gmail.com"; 
@@ -168,18 +169,25 @@
 
         window.logout = async function() { await supabase.auth.signOut(); window.location.href = 'login.html'; }
         
-        // --- GESTION FICHIER ET UI ---
         window.switchTab = function(t) { ['create','manage','sales','ads'].forEach(id => document.getElementById('view-'+id).classList.toggle('hidden', id !== t)); ['tab-create','tab-manage','tab-sales','tab-ads'].forEach(id => { const btn = document.getElementById(id); if(id === 'tab-'+t) btn.className = "flex-1 py-4 font-bold text-lg rounded-xl shadow-sm transition bg-blue-600 text-white"; else btn.className = "flex-1 py-4 font-bold text-lg rounded-xl shadow-sm transition bg-white text-gray-500 hover:bg-gray-50"; }); if(t === 'manage') fetchAllLessons(); if(t === 'sales') fetchSales(); if(t === 'ads') fetchAds(); }
+        
         window.toggleSource = function(mode) { 
             detectedType = mode === 'file' ? null : 'manual';
             document.getElementById('btn-source-file').className = "flex-1 py-3 border-2 rounded-xl font-bold transition " + (mode === 'file' ? "active-source" : "border-gray-200 bg-white text-gray-500");
             document.getElementById('btn-source-manual').className = "flex-1 py-3 border-2 rounded-xl font-bold transition " + (mode === 'manual' ? "active-source" : "border-gray-200 bg-white text-gray-500");
             document.getElementById('zone-upload').classList.toggle('hidden', mode !== 'file');
             document.getElementById('zone-text').classList.toggle('hidden', mode !== 'manual');
-            if(mode === 'file') disableButton(); else checkManualInput();
+            
+            // RESET VISUEL SI ON CHANGE DE SOURCE
+            if(mode === 'file') {
+                disableButton();
+                document.getElementById('library-options').classList.add('hidden'); // Caché par défaut en mode fichier
+            } else {
+                checkManualInput();
+                document.getElementById('library-options').classList.add('hidden'); // Caché en manuel
+            }
         }
 
-        // --- LES FONCTIONS QUI MANQUAIENT ---
         window.handleFileSelect = function() {
             const input = document.getElementById('fileInput');
             if (input.files && input.files[0]) {
@@ -187,15 +195,21 @@
                 document.getElementById('file-name').innerText = "📄 " + f.name;
                 document.getElementById('file-name').classList.remove('hidden');
                 
-                // Détection type
-                if(f.name.endsWith('.epub')) detectedType = 'epub';
-                else if(f.name.endsWith('.pdf')) detectedType = 'pdf';
+                // DÉTECTION EPUB POUR AFFICHER LE MENU
+                if(f.name.toLowerCase().endsWith('.epub')) {
+                    detectedType = 'epub';
+                    document.getElementById('library-options').classList.remove('hidden'); // AFFICHE LE MENU
+                    document.getElementById('btn-action').innerText = "Enregistrer le Livre";
+                }
+                else if(f.name.toLowerCase().endsWith('.pdf')) {
+                    detectedType = 'pdf';
+                    document.getElementById('library-options').classList.add('hidden');
+                    document.getElementById('btn-action').innerText = "Lancer le traitement IA";
+                }
                 
-                // Active le bouton
                 const btn = document.getElementById('btn-action');
                 btn.disabled = false;
                 btn.className = "w-full bg-green-600 text-white font-bold py-4 rounded-xl shadow-lg transition transform hover:scale-[1.01] cursor-pointer";
-                btn.innerText = "Lancer le traitement IA";
             }
         }
 
@@ -208,7 +222,6 @@
             document.getElementById('fileInput').value = ""; 
         }
 
-        // --- TRAITEMENT IA ---
         window.processData = async function() {
             const statusDiv = document.getElementById('status');
             const file = document.getElementById('fileInput').files[0];
@@ -229,39 +242,27 @@
 
                 if (detectedType === 'epub' && file) {
                     const fileName = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`; await supabase.storage.from('library').upload(fileName, file); const { data } = supabase.storage.from('library').getPublicUrl(fileName); fileUrl = data.publicUrl;
-                    dbObjects = [{ niveau, classe, matiere, titre, slug, type_contenu: 'livre_bibliotheque', file_url: fileUrl, auteur: document.getElementById('meta-auteur').value, genre: document.getElementById('meta-genre').value, image_couverture: document.getElementById('meta-cover').value, est_publie: isPublie }];
+                    
+                    dbObjects = [{ 
+                        niveau, classe, matiere, titre, slug, 
+                        type_contenu: 'livre_bibliotheque', 
+                        file_url: fileUrl, 
+                        auteur: document.getElementById('meta-auteur').value, 
+                        genre: document.getElementById('meta-genre').value, 
+                        image_couverture: document.getElementById('meta-cover').value, 
+                        contenu_html: document.getElementById('meta-resume').value, // ON SAUVEGARDE LE RÉSUMÉ ICI
+                        est_publie: isPublie 
+                    }];
                 } 
                 else if (detectedType === 'pdf' && file && !editId) {
                     const base64File = await fileToBase64(file);
                     
-                    const prompt = `
-                    Agis comme un expert pédagogique. Analyse ce document PDF et génère un cours structuré au format JSON STRICT.
-                    ATTENTION : Ta réponse doit être UNIQUEMENT un tableau d'objets JSON valide, sans markdown, sans \`\`\`json, sans texte avant ni après.
-                    
-                    Chaque objet du tableau représente une leçon et doit suivre EXACTEMENT cette structure :
-                    [{
-                      "titre": "Titre de la leçon",
-                      "contenu": {
-                        "definition": "Définition courte et claire",
-                        "explication": "Le cours complet détaillé. Utilise du Markdown (gras, italique) ici.",
-                        "etapes": ["Point clé 1", "Point clé 2", "Point clé 3"],
-                        "exemple": "Un exemple concret"
-                      },
-                      "revisions": {
-                        "idees_essentielles": ["Résumé 1", "Résumé 2"],
-                        "vocabulaire": [{"terme": "Mot1", "def": "Def1"}, {"terme": "Mot2", "def": "Def2"}]
-                      },
-                      "exercices": [
-                        {"enonce": "Question 1", "solution": "Réponse 1"}
-                      ],
-                      "quiz": [
-                        {"question": "Question QCM ?", "options": ["A", "B", "C"], "correct": 0}
-                      ]
-                    }]`;
+                    const prompt = `Agis comme un expert pédagogique. Analyse ce document PDF et génère un cours structuré au format JSON STRICT.
+                    ATTENTION : Ta réponse doit être UNIQUEMENT un tableau d'objets JSON valide, sans markdown, sans \`\`\`json.
+                    Structure : [{ "titre": "...", "contenu": { "definition": "...", "explication": "...", "etapes": [], "exemple": "..." }, "revisions": { "idees_essentielles": [], "vocabulaire": [] }, "exercices": [{ "enonce": "...", "solution": "..." }], "quiz": [{ "question": "...", "options": [], "correct": 0 }] }]`;
 
                     const result = await model.generateContent([prompt, base64File]);
-                    let text = result.response.text();
-                    text = text.replace(/```json/g, '').replace(/```/g, '').trim();
+                    let text = result.response.text().replace(/```json/g, '').replace(/```/g, '').trim();
                     const json = JSON.parse(text);
 
                     dbObjects = json.map(l => ({ 
@@ -281,11 +282,43 @@
             } catch(e) { statusDiv.innerHTML = 'Erreur: ' + e.message; console.error(e); }
         }
 
-        // --- FONCTIONS UTILITAIRES ---
         window.fetchAllLessons = async function() { const { data } = await supabase.from('lessons').select('*').order('id', { ascending: false }); allLessons = data || []; renderLessonsList(); }
         window.renderLessonsList = function() { const q = document.getElementById('manage-search').value.toLowerCase(); document.getElementById('lessons-list').innerHTML = allLessons.filter(l => l.titre.toLowerCase().includes(q)).map(l => `<tr class="border-b hover:bg-gray-50"><td class="pl-4 py-3"><button onclick="toggleLessonStatus(${l.id}, ${l.est_publie})" class="${l.est_publie ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'} px-2 py-1 rounded text-xs font-bold">${l.est_publie ? 'Publié' : 'Brouillon'}</button></td><td class="font-bold text-slate-700">${l.titre}</td><td class="text-xs text-gray-500">${l.type_contenu}</td><td class="text-gray-500 text-sm">${l.matiere || '-'}</td><td class="text-right pr-4"><button onclick="editLesson(${l.id})" class="text-blue-600 mr-2">✏️</button><button onclick="deleteLesson(${l.id})" class="text-red-600">🗑️</button></td></tr>`).join(''); }
         window.toggleLessonStatus = async function(id, currentStatus) { await supabase.from('lessons').update({ est_publie: !currentStatus }).eq('id', id); fetchAllLessons(); }
-        window.editLesson = async function(id) { const { data } = await supabase.from('lessons').select('*').eq('id', id).single(); switchTab('create'); if(data.type_contenu === 'livre_bibliotheque') { toggleSource('file'); document.getElementById('library-options').classList.remove('hidden'); detectedType = 'epub'; } else { toggleSource('manual'); } document.getElementById('edit-mode-id').value = id; document.getElementById('rawTitle').value = data.titre; document.getElementById('audioInput').value = data.audio_url || ""; document.getElementById('check-publie').checked = data.est_publie; document.getElementById('meta-auteur').value = data.auteur || ""; document.getElementById('meta-genre').value = data.genre || ""; document.getElementById('meta-cover').value = data.image_couverture || ""; let contentStr = data.contenu_html; try { if(typeof data.contenu_html === 'object') contentStr = JSON.stringify(data.contenu_html, null, 2); } catch(e){} document.getElementById('rawText').value = contentStr; document.getElementById('form-title').innerText = "Modifier : " + data.titre; checkManualInput(); }
+        
+        window.editLesson = async function(id) { 
+            const { data } = await supabase.from('lessons').select('*').eq('id', id).single(); 
+            switchTab('create'); 
+            
+            if(data.type_contenu === 'livre_bibliotheque') { 
+                toggleSource('file'); 
+                document.getElementById('library-options').classList.remove('hidden'); 
+                detectedType = 'epub'; 
+            } else { 
+                toggleSource('manual'); 
+            } 
+            
+            document.getElementById('edit-mode-id').value = id; 
+            document.getElementById('rawTitle').value = data.titre; 
+            document.getElementById('audioInput').value = data.audio_url || ""; 
+            document.getElementById('check-publie').checked = data.est_publie; 
+            
+            // Remplissage infos biblio
+            document.getElementById('meta-auteur').value = data.auteur || ""; 
+            document.getElementById('meta-genre').value = data.genre || ""; 
+            document.getElementById('meta-cover').value = data.image_couverture || ""; 
+            // Remplissage résumé (si c'est un livre)
+            if(data.type_contenu === 'livre_bibliotheque') {
+                document.getElementById('meta-resume').value = data.contenu_html || ""; // Le résumé est stocké là
+            }
+            
+            let contentStr = data.contenu_html; 
+            try { if(typeof data.contenu_html === 'object') contentStr = JSON.stringify(data.contenu_html, null, 2); } catch(e){} 
+            document.getElementById('rawText').value = contentStr; 
+            document.getElementById('form-title').innerText = "Modifier : " + data.titre; 
+            checkManualInput(); 
+        }
+
         window.deleteLesson = async function(id) { if(confirm("Supprimer ?")) { await supabase.from('lessons').delete().eq('id', id); fetchAllLessons(); } }
         window.fetchAds = async function() { const { data } = await supabase.from('ads').select('*').order('created_at', { ascending: false }); allAds = data || []; renderAdsList(); }
         window.renderAdsList = function() { document.getElementById('ads-list').innerHTML = allAds.map(ad => `<div class="flex items-center gap-4 p-4 border rounded ${ad.actif ? 'bg-green-50' : 'opacity-50'}"><span>${ad.link_url}</span><button onclick="toggleAdStatus(${ad.id}, ${ad.actif})">I/O</button><button onclick="deleteAd(${ad.id})">Del</button></div>`).join(''); }
@@ -305,4 +338,3 @@
     </script>
 </body>
 </html>
-
