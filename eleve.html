@@ -3,127 +3,367 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Les Cours - SchoolAI</title>
+    <title>Salle de Classe - SchoolAI</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/4.0.2/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        /* Animation d'apparition */
-        .fade-in { animation: fadeIn 0.5s ease-out; }
+        .animate-fade-in { animation: fadeIn 0.5s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .tab-btn { border-bottom: 3px solid transparent; color: #64748b; }
+        .tab-btn.active { border-bottom: 3px solid #2563eb; color: #2563eb; font-weight: bold; }
+        .formula-box { font-family: 'Courier New', monospace; background: #1e293b; color: #fbbf24; padding: 1rem; border-radius: 0.5rem; text-align: center; margin: 1rem 0; }
+        details > summary { list-style: none; cursor: pointer; transition: all 0.2s; }
+        details > summary::-webkit-details-marker { display: none; }
+        details[open] > summary .arrow { transform: rotate(90deg); }
+        .tree-level { border-left: 2px solid #e2e8f0; margin-left: 10px; padding-left: 10px; }
+        /* Ajout pour s'assurer que le menu passe au dessus */
+        aside.fixed { z-index: 9999; }
     </style>
 </head>
-<body class="bg-gray-50 font-sans text-slate-800">
+<body class="bg-slate-50 font-sans text-slate-800 h-screen flex overflow-hidden">
 
-    <nav class="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-gray-100">
-        <div class="max-w-7xl mx-auto px-6 py-4">
-            <div class="flex justify-between items-center">
-                <a href="index.html" class="flex items-center gap-2">
-                    <i class="fas fa-graduation-cap text-blue-600 text-3xl"></i>
-                    <span class="font-black text-2xl tracking-tighter text-blue-900">School<span class="text-blue-600">AI</span></span>
-                </a>
-                
-                <div class="hidden md:flex space-x-8 items-center font-bold text-sm text-gray-500">
-                    <a href="eleve.html" class="text-blue-600">Tous les Cours</a>
-                    <a href="biblio.html" class="hover:text-purple-600">Bibliothèque</a>
-                    <a href="contact.html" class="hover:text-blue-600">Contact</a>
-                </div>
-
-                <div class="flex gap-4 items-center">
-                    <a href="login.html" class="bg-blue-600 text-white px-4 py-2 rounded-full text-sm font-bold hidden sm:block">Mon Compte</a>
-                    <button id="main-menu-btn" class="md:hidden text-gray-600 text-2xl"><i class="fas fa-bars"></i></button>
-                </div>
-            </div>
-            <div id="main-menu" class="hidden md:hidden mt-4 pb-4 border-t border-gray-100">
-                <div class="flex flex-col space-y-4 pt-4 font-bold text-gray-600">
-                    <a href="index.html" class="block">Accueil</a>
-                    <a href="eleve.html" class="block text-blue-600">Cours</a>
-                    <a href="biblio.html" class="block">Bibliothèque</a>
-                </div>
+    <aside id="sidebar" class="fixed inset-y-0 left-0 w-80 bg-white border-r border-gray-100 flex flex-col hidden md:relative md:flex shadow-2xl md:shadow-xl transition-transform">
+        <div class="p-6 border-b border-gray-50 flex justify-between items-center">
+            <a href="index.html" class="flex items-center gap-2 hover:opacity-80 transition">
+                <i class="fas fa-graduation-cap text-blue-600 text-2xl"></i>
+                <span class="font-black text-xl text-blue-900">School<span class="text-blue-600">AI</span></span>
+            </a>
+            <div class="flex items-center gap-3">
+                <a href="eleve.html" title="Recharger" class="text-xs font-bold text-gray-400 hover:text-blue-600"><i class="fas fa-sync"></i></a>
+                <button onclick="toggleSidebar()" class="md:hidden text-gray-500 hover:text-red-500 text-xl px-2">
+                    <i class="fas fa-times"></i>
+                </button>
             </div>
         </div>
-    </nav>
-
-    <div class="max-w-7xl mx-auto px-4 py-8">
         
-        <div class="flex flex-col md:flex-row gap-8">
-            
-            <button id="toggle-filters-btn" class="md:hidden w-full bg-white border border-blue-200 text-blue-600 font-bold py-3 rounded-xl shadow-sm flex justify-center items-center gap-2 mb-4">
-                <i class="fas fa-filter"></i> Menu Cours / Filtres
-            </button>
-
-            <aside id="filters-sidebar" class="hidden md:block w-full md:w-64 flex-shrink-0">
-                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 sticky top-24">
-                    <div class="flex justify-between items-center mb-6">
-                        <h3 class="font-black text-lg text-slate-800">Niveaux</h3>
-                        <button id="close-filters-btn" class="md:hidden text-gray-400"><i class="fas fa-times"></i></button>
-                    </div>
-                    
-                    <div class="space-y-2">
-                        <a href="#" class="block px-4 py-2 rounded-lg bg-blue-50 text-blue-700 font-bold">Tous les niveaux</a>
-                        <a href="#" class="block px-4 py-2 rounded-lg text-gray-600 hover:bg-gray-50 hover:text-blue-600">Primaire</a>
-                        <a href="#" class="block px-4 py-2 rounded-lg text-gray-600 hover:bg-gray-50 hover:text-blue-600">Collège</a>
-                        <a href="#" class="block px-4 py-2 rounded-lg text-gray-600 hover:bg-gray-50 hover:text-blue-600">Lycée</a>
-                        <a href="#" class="block px-4 py-2 rounded-lg text-gray-600 hover:bg-gray-50 hover:text-blue-600">Formation Pro</a>
-                    </div>
-                </div>
-            </aside>
-
-            <main class="flex-1">
-                <h1 class="text-3xl font-black text-slate-900 mb-6">Catalogue des cours</h1>
-                
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                    
-                    <div class="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm hover:shadow-md transition fade-in">
-                        <span class="bg-orange-100 text-orange-600 text-xs font-bold px-2 py-1 rounded-md mb-3 inline-block">Primaire</span>
-                        <h3 class="font-bold text-lg mb-2">Mathématiques T1</h3>
-                        <p class="text-sm text-gray-500 mb-4">Addition, soustraction et géométrie de base.</p>
-                        <button class="w-full bg-slate-900 text-white py-2 rounded-lg text-sm font-bold hover:bg-blue-600 transition">Voir le cours</button>
-                    </div>
-
-                    <div class="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm hover:shadow-md transition fade-in">
-                        <span class="bg-blue-100 text-blue-600 text-xs font-bold px-2 py-1 rounded-md mb-3 inline-block">Collège</span>
-                        <h3 class="font-bold text-lg mb-2">Physique-Chimie</h3>
-                        <p class="text-sm text-gray-500 mb-4">Les atomes et les réactions chimiques.</p>
-                        <button class="w-full bg-slate-900 text-white py-2 rounded-lg text-sm font-bold hover:bg-blue-600 transition">Voir le cours</button>
-                    </div>
-
-                     <div class="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm hover:shadow-md transition fade-in">
-                        <span class="bg-purple-100 text-purple-600 text-xs font-bold px-2 py-1 rounded-md mb-3 inline-block">Lycée</span>
-                        <h3 class="font-bold text-lg mb-2">Philosophie</h3>
-                        <p class="text-sm text-gray-500 mb-4">Introduction aux grands concepts.</p>
-                        <button class="w-full bg-slate-900 text-white py-2 rounded-lg text-sm font-bold hover:bg-blue-600 transition">Voir le cours</button>
-                    </div>
-
-                </div>
-            </main>
+        <div class="p-4 bg-gray-50/50">
+            <div class="relative">
+                <i class="fas fa-search absolute left-3 top-3 text-gray-400 text-sm"></i>
+                <input type="text" id="search-lesson" placeholder="Rechercher..." class="w-full pl-9 pr-4 py-3 bg-white border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 ring-blue-500 transition shadow-sm" onkeyup="handleSearch()">
+            </div>
+            <div id="active-filter-badge" class="hidden mt-2">
+                <span class="bg-blue-100 text-blue-700 text-xs font-bold px-2 py-1 rounded-lg flex items-center justify-between"><span id="filter-name">Filtre</span><button onclick="window.location.href='eleve.html'" class="ml-2 hover:text-blue-900"><i class="fas fa-times"></i></button></span>
+            </div>
         </div>
-    </div>
+
+        <div class="flex-1 overflow-y-auto px-2 py-2" id="lesson-sidebar-content">
+            <div class="text-center py-10 text-gray-400 text-sm animate-pulse">
+                <i class="fas fa-circle-notch fa-spin mb-2 text-2xl"></i><br>Chargement des cours...
+            </div>
+        </div>
+    </aside>
+
+    <main class="flex-1 flex flex-col relative w-full overflow-hidden bg-slate-50">
+        
+        <header class="bg-white/90 backdrop-blur-md border-b border-gray-100 p-4 flex justify-between items-center sticky top-0 z-10 shadow-sm shrink-0">
+            <div class="flex items-center gap-3">
+                <button class="md:hidden text-slate-700 text-xl p-2 hover:bg-gray-100 rounded-lg transition" onclick="toggleSidebar()">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <h2 class="font-bold text-slate-700 hidden sm:block">Catalogue</h2>
+            </div>
+            <div class="flex items-center gap-3">
+                <a href="biblio.html" class="bg-purple-50 text-purple-700 border border-purple-200 px-4 py-2 rounded-lg font-bold text-sm hover:bg-purple-100 transition flex items-center gap-2"><i class="fas fa-book-reader"></i> <span class="hidden sm:inline">Bibliothèque</span></a>
+                <a href="index.html" class="bg-gray-50 text-gray-600 border border-gray-200 px-4 py-2 rounded-lg font-bold text-sm hover:bg-gray-100 transition"><i class="fas fa-home"></i></a>
+            </div>
+        </header>
+
+        <div id="content-area" class="flex-1 overflow-y-auto p-4 md:p-8 scroll-smooth">
+            
+            <div id="welcome-screen" class="max-w-3xl mx-auto text-center py-12 md:py-24 animate-fade-in">
+                <div class="inline-block p-6 rounded-full bg-white shadow-xl mb-8 transform hover:scale-105 transition duration-500"><span class="text-6xl">🎓</span></div>
+                <h1 class="text-3xl md:text-5xl font-black text-slate-800 mb-6 tracking-tight">Bienvenue !</h1>
+                <p class="text-lg md:text-xl text-slate-500 mb-10 max-w-xl mx-auto leading-relaxed">Sélectionnez un cours dans le menu pour commencer.</p>
+                
+                <button onclick="toggleSidebar()" class="md:hidden w-full py-4 bg-blue-600 text-white rounded-xl font-bold shadow-lg shadow-blue-200 mb-4 animate-bounce flex justify-center items-center gap-2">
+                    <i class="fas fa-list"></i> Voir les cours
+                </button>
+            </div>
+
+            <div id="lesson-content" class="hidden max-w-5xl mx-auto pb-32">
+                <div class="mb-6">
+                    <div class="flex items-center gap-2 mb-3"><span id="lesson-niveau" class="text-[10px] font-black uppercase tracking-widest bg-slate-800 text-white px-2 py-1 rounded">Niveau</span><span id="lesson-matiere" class="text-[10px] font-black uppercase tracking-widest bg-blue-100 text-blue-700 px-2 py-1 rounded">Matière</span></div>
+                    <h1 id="lesson-title" class="text-2xl md:text-4xl font-black text-slate-900 leading-tight mb-2">Titre du cours</h1>
+                    <p id="lesson-subtitle" class="text-slate-500 italic"></p>
+                </div>
+                
+                <div class="flex border-b border-gray-200 mb-6 overflow-x-auto bg-white rounded-t-xl">
+                    <button onclick="switchTab('lecon')" class="tab-btn active flex-1 py-4 px-6 text-sm uppercase tracking-wider transition whitespace-nowrap" id="btn-lecon">📖 Leçon</button>
+                    <button onclick="switchTab('revisions')" class="tab-btn flex-1 py-4 px-6 text-sm uppercase tracking-wider transition whitespace-nowrap" id="btn-revisions">🧠 À Retenir</button>
+                    <button onclick="switchTab('exercices')" class="tab-btn flex-1 py-4 px-6 text-sm uppercase tracking-wider transition whitespace-nowrap" id="btn-exercices">📝 Exercices</button>
+                    <button onclick="switchTab('quiz')" class="tab-btn flex-1 py-4 px-6 text-sm uppercase tracking-wider transition whitespace-nowrap" id="btn-quiz">❓ Quiz</button>
+                </div>
+
+                <div id="tab-lecon" class="tab-content animate-fade-in">
+                    <div id="audio-player-container" class="hidden mb-6 bg-orange-50 p-4 rounded-xl border border-orange-200 flex items-center gap-4 shadow-sm">
+                        <div class="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center text-white shrink-0 shadow"><i class="fas fa-headphones-alt"></i></div>
+                        <div class="flex-1"><p class="text-xs font-bold text-orange-800 uppercase mb-1">Version Audio</p><audio id="audio-player" controls class="w-full h-8 accent-orange-500"></audio></div>
+                    </div>
+                    <div id="lecon-body" class="prose max-w-none bg-white p-6 md:p-10 rounded-3xl shadow-sm border border-gray-100 text-slate-700 leading-relaxed"></div>
+                </div>
+
+                <div id="tab-revisions" class="tab-content hidden animate-fade-in">
+                    <div class="bg-yellow-50 p-8 rounded-3xl border border-yellow-100 shadow-sm">
+                        <h3 class="text-xl font-black text-yellow-800 mb-4">Idées Essentielles</h3><ul id="revisions-list" class="space-y-3 mb-8 list-disc pl-5 text-slate-700 font-medium"></ul>
+                        <h3 class="text-xl font-black text-yellow-800 mb-4">Vocabulaire</h3><div id="vocab-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+                    </div>
+                </div>
+
+                <div id="tab-exercices" class="tab-content hidden animate-fade-in">
+                    <div class="flex justify-end mb-4"><button onclick="generatePDF()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-bold text-sm shadow flex items-center gap-2 transition"><i class="fas fa-file-pdf"></i> Imprimer</button></div>
+                    <div id="exercices-list" class="space-y-6"></div>
+                </div>
+
+                <div id="tab-quiz" class="tab-content hidden animate-fade-in">
+                    <div class="bg-indigo-900 text-white p-8 rounded-3xl shadow-xl relative overflow-hidden">
+                        <h2 class="text-2xl font-bold mb-6 relative z-10">Testez vos connaissances</h2><div id="quiz-container" class="space-y-6 relative z-10 text-slate-800"></div><div id="quiz-result" class="mt-6 font-bold text-center text-xl hidden bg-white/20 p-4 rounded-xl backdrop-blur relative z-10"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="fixed bottom-6 right-6 z-40 flex flex-col items-end">
+            <div id="chat-window" class="hidden bg-white w-80 md:w-96 h-[500px] rounded-2xl shadow-2xl border border-gray-200 flex flex-col mb-4 overflow-hidden animate-fade-in">
+                <div class="bg-blue-600 p-4 text-white flex justify-between items-center shrink-0 shadow-md"><div class="font-bold flex items-center gap-2"><i class="fas fa-robot"></i> Assistant Prof</div><button onclick="toggleChat()" class="hover:bg-blue-700 p-1 rounded transition"><i class="fas fa-times"></i></button></div>
+                <div id="chatbox" class="flex-1 overflow-y-auto p-4 bg-slate-50 text-sm space-y-4"><div class="text-left"><span class="bg-white border border-gray-200 text-slate-700 px-4 py-3 rounded-tr-xl rounded-br-xl rounded-bl-xl shadow-sm inline-block">Une question sur le cours ? 👋</span></div></div>
+                <div class="p-3 bg-white border-t flex gap-2"><input type="text" id="chat-input" placeholder="Je n'ai pas compris..." class="flex-1 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 ring-blue-500 transition" onkeypress="if(event.key==='Enter') sendMessage()"><button onclick="sendMessage()" class="bg-blue-600 text-white w-10 h-10 rounded-lg hover:bg-blue-700 transition flex items-center justify-center shadow-md"><i class="fas fa-paper-plane"></i></button></div>
+            </div>
+            <button onclick="toggleChat()" class="w-16 h-16 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-xl flex items-center justify-center text-2xl transition transform hover:scale-110 border-4 border-white"><i class="fas fa-comment-dots"></i></button>
+        </div>
+    </main>
 
     <script>
-        // 1. Gestion du Menu Principal (Navbar)
-        const mainBtn = document.getElementById('main-menu-btn');
-        const mainMenu = document.getElementById('main-menu');
-        
-        mainBtn.addEventListener('click', () => {
-            mainMenu.classList.toggle('hidden');
-        });
+        // Fonction pour afficher/cacher la sidebar sur mobile
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('hidden');
+        }
 
-        // 2. Gestion du Menu Filtres (Sidebar Mobile)
-        const filterBtn = document.getElementById('toggle-filters-btn');
-        const closeFilterBtn = document.getElementById('close-filters-btn');
-        const sidebar = document.getElementById('filters-sidebar');
+        // Fonction pour changer les onglets
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById('tab-' + tabId).classList.remove('hidden');
+            document.getElementById('btn-' + tabId).classList.add('active');
+        }
 
-        // Ouvrir les filtres
-        filterBtn.addEventListener('click', () => {
-            sidebar.classList.remove('hidden'); // On enlève 'hidden' pour afficher
-            // Petit style pour le mettre en plein écran sur mobile si besoin, 
-            // ou juste l'afficher dans le flux. Ici il s'affiche au dessus de la liste.
-        });
+        // Fonction Chat
+        function toggleChat() { document.getElementById('chat-window').classList.toggle('hidden'); }
 
-        // Fermer les filtres (croix)
-        closeFilterBtn.addEventListener('click', () => {
-            sidebar.classList.add('hidden'); // On remet 'hidden'
-        });
+        // Fonction Quiz
+        function checkQuizAnswer(qIdx, cIdx, element) {
+            if(!window.currentLessonData) return;
+            const questionData = window.currentLessonData.quiz.questions[qIdx];
+            const choiceText = questionData.choix[cIdx];
+            const isCorrect = questionData.reponses.includes(choiceText);
+            const feedbackEl = document.getElementById(`feedback-${qIdx}`);
+            
+            feedbackEl.classList.remove('hidden');
+            element.parentElement.querySelectorAll('.quiz-option').forEach(el => el.classList.add('opacity-50'));
+            element.classList.remove('opacity-50');
+            
+            if(isCorrect) {
+                element.style.backgroundColor = '#dcfce7'; element.style.borderColor = '#22c55e';
+                feedbackEl.className = "mt-2 p-3 rounded font-bold text-center bg-green-100 text-green-800";
+                feedbackEl.innerText = questionData.feedback.correct || "Correct !";
+            } else {
+                element.style.backgroundColor = '#fee2e2'; element.style.borderColor = '#ef4444';
+                feedbackEl.className = "mt-2 p-3 rounded font-bold text-center bg-red-100 text-red-800";
+                feedbackEl.innerText = questionData.feedback.incorrect || "Faux.";
+            }
+        }
+    </script>
+
+    <script type="module">
+        import { GoogleGenerativeAI } from "https://esm.run/@google/generative-ai";
+        import { createClient } from "https://esm.run/@supabase/supabase-js";
+
+        const API_KEY_GEMINI = "AIzaSyCawLuudWet7lr3cGMLoUszYE5VCp7y7Ew"; 
+        const SUPABASE_URL = "https://jdxdthxztokjhprwynyf.supabase.co";
+        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpkeGR0aHh6dG9ramhwcnd5bnlmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcxODAyNzgsImV4cCI6MjA4Mjc1NjI3OH0.zal-p0RKJ-PYGvzal1K9-asbUbyQmqG5OtPTWnoHQmI";
+
+        const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+        const genAI = new GoogleGenerativeAI(API_KEY_GEMINI);
+
+        let allLessons = []; 
+        window.jsPDF = window.jspdf.jsPDF;
+        window.currentLessonData = null; // Rendre accessible globalement
+
+        // Chargement initial
+        window.onload = async function() {
+            try {
+                const { data, error } = await supabase.from('lessons').select('*').neq('type_contenu', 'livre_bibliotheque').eq('est_publie', true).order('titre', { ascending: true });
+                
+                if(data) {
+                    allLessons = data;
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const filterParam = urlParams.get('filter');
+
+                    if (filterParam) {
+                        const filteredData = allLessons.filter(l => l.niveau === filterParam);
+                        document.getElementById('active-filter-badge').classList.remove('hidden');
+                        document.getElementById('filter-name').innerText = filterParam;
+                        buildAndRenderTree(filteredData);
+                    } else {
+                        buildAndRenderTree(allLessons);
+                    }
+                } else { 
+                    document.getElementById('lesson-sidebar-content').innerHTML = '<p class="text-center text-gray-400 mt-4">Aucun cours disponible.</p>'; 
+                }
+            } catch (err) {
+                console.error("Erreur connexion:", err);
+                document.getElementById('lesson-sidebar-content').innerHTML = '<p class="text-center text-red-400 mt-4">Erreur de connexion.</p>';
+            }
+        };
+
+        // Construction de l'arbre des cours
+        function buildAndRenderTree(lessons) {
+            const container = document.getElementById('lesson-sidebar-content'); 
+            container.innerHTML = '';
+            
+            if (lessons.length === 0) { container.innerHTML = '<p class="text-gray-400 text-sm p-4 text-center">Aucun cours trouvé.</p>'; return; }
+            
+            const tree = {};
+            lessons.forEach(l => { 
+                const niv = l.niveau || "Autre"; const cls = l.classe || "Général"; const mat = l.matiere || "Divers"; 
+                if (!tree[niv]) tree[niv] = {}; if (!tree[niv][cls]) tree[niv][cls] = {}; if (!tree[niv][cls][mat]) tree[niv][cls][mat] = []; 
+                tree[niv][cls][mat].push(l); 
+            });
+
+            for (const niv in tree) {
+                const nivDetails = document.createElement('details'); nivDetails.open = true; nivDetails.className = "mb-2 group";
+                const nivSummary = document.createElement('summary'); nivSummary.className = "font-black text-slate-700 hover:text-blue-600 p-2 rounded bg-slate-100 flex items-center gap-2 select-none"; 
+                nivSummary.innerHTML = `<i class="fas fa-chevron-right text-xs arrow text-gray-400 transition"></i> <i class="fas fa-layer-group text-blue-500"></i> ${niv}`;
+                
+                const nivContent = document.createElement('div'); nivContent.className = "tree-level";
+                for (const cls in tree[niv]) {
+                    const clsDetails = document.createElement('details'); clsDetails.className = "mt-1";
+                    const clsSummary = document.createElement('summary'); clsSummary.className = "font-bold text-sm text-slate-600 hover:text-blue-500 p-1.5 flex items-center gap-2 select-none"; 
+                    clsSummary.innerHTML = `<i class="fas fa-chevron-right text-[10px] arrow text-gray-300 transition"></i> ${cls}`;
+                    
+                    const clsContent = document.createElement('div'); clsContent.className = "tree-level border-l border-gray-200 ml-3 pl-2";
+                    for (const mat in tree[niv][cls]) {
+                        const matDetails = document.createElement('details'); matDetails.className = "mt-1";
+                        const matSummary = document.createElement('summary'); matSummary.className = "font-semibold text-xs text-slate-500 hover:text-blue-500 p-1 flex items-center gap-2 select-none uppercase tracking-wide"; 
+                        matSummary.innerHTML = `<i class="fas fa-chevron-right text-[10px] arrow text-gray-300 transition"></i> ${mat}`;
+                        
+                        const matContent = document.createElement('div'); matContent.className = "ml-4 mt-1 space-y-1";
+                        tree[niv][cls][mat].forEach(l => { 
+                            const lessonLink = document.createElement('div'); 
+                            lessonLink.className = "text-xs p-2 rounded cursor-pointer hover:bg-blue-50 text-slate-600 hover:text-blue-700 transition truncate border-l-2 border-transparent hover:border-blue-500"; 
+                            lessonLink.innerText = l.titre; 
+                            lessonLink.onclick = () => fetchAndDisplayLesson(l.id); 
+                            matContent.appendChild(lessonLink); 
+                        });
+                        matDetails.appendChild(matSummary); matDetails.appendChild(matContent); clsContent.appendChild(matDetails);
+                    }
+                    clsDetails.appendChild(clsSummary); clsDetails.appendChild(clsContent); nivContent.appendChild(clsDetails);
+                }
+                nivDetails.appendChild(nivSummary); nivDetails.appendChild(nivContent); container.appendChild(nivDetails);
+            }
+        }
+
+        // Recherche
+        window.handleSearch = function() {
+            const query = document.getElementById('search-lesson').value.toLowerCase();
+            if (query.length === 0) { 
+                const urlParams = new URLSearchParams(window.location.search); 
+                const filterParam = urlParams.get('filter'); 
+                if(filterParam) buildAndRenderTree(allLessons.filter(l => l.niveau === filterParam)); 
+                else buildAndRenderTree(allLessons); 
+                return; 
+            }
+            const filtered = allLessons.filter(l => (l.titre && l.titre.toLowerCase().includes(query)) || (l.matiere && l.matiere.toLowerCase().includes(query)));
+            const container = document.getElementById('lesson-sidebar-content'); container.innerHTML = '';
+            if(filtered.length === 0) { container.innerHTML = '<p class="text-gray-400 text-sm text-center mt-4">Aucun résultat.</p>'; return; }
+            filtered.forEach(l => { container.innerHTML += `<div onclick="window.fetchAndDisplayLesson(${l.id})" class="p-3 mx-1 rounded-lg hover:bg-blue-50 cursor-pointer border-b border-gray-50 group"><div class="text-[10px] uppercase font-bold text-gray-400 mb-1">${l.niveau} > ${l.matiere}</div><div class="text-sm font-bold text-slate-700 group-hover:text-blue-600">${l.titre}</div></div>`; });
+        }
+
+        // Affichage d'un cours
+        window.fetchAndDisplayLesson = async function(id) {
+            // UI : Fermer sidebar mobile + Switcher écran
+            document.getElementById('welcome-screen').classList.add('hidden'); 
+            document.getElementById('lesson-content').classList.remove('hidden'); 
+            if(window.innerWidth < 768) toggleSidebar(); 
+
+            // Data : Récupérer cours
+            const { data, error } = await supabase.from('lessons').select('*').eq('id', id).single(); 
+            if (error || !data) return alert("Erreur chargement cours");
+
+            // Remplissage
+            document.getElementById('lesson-niveau').innerText = data.niveau || 'Niveau'; 
+            document.getElementById('lesson-matiere').innerText = data.matiere || 'Matière'; 
+            document.getElementById('lesson-title').innerText = data.titre;
+            
+            if(data.audio_url) { document.getElementById('audio-player-container').classList.remove('hidden'); document.getElementById('audio-player').src = data.audio_url; } 
+            else { document.getElementById('audio-player-container').classList.add('hidden'); }
+            
+            try { 
+                const jsonContent = JSON.parse(data.contenu_html); 
+                window.currentLessonData = jsonContent; 
+                renderLessonFromJSON(jsonContent); 
+            } catch (e) { 
+                window.currentLessonData = { simple_text: data.contenu_html }; 
+                renderLessonSimple(data.contenu_html); 
+            } 
+            switchTab('lecon');
+        }
+
+        // Rendu HTML du JSON
+        function renderLessonFromJSON(json) {
+            const c = json.contenu || {}; 
+            document.getElementById('lesson-subtitle').innerText = c.sous_titre || '';
+            let htmlLecon = `<h3 class="font-bold text-xl text-blue-800 mb-2">Définition</h3><div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r mb-6">${c.definition || 'Pas de définition.'}</div><div class="mb-6">${marked.parse(c.explication || '')}</div>`;
+            if(c.formules) c.formules.forEach(f => { htmlLecon += `<div class="formula-box"><div class="text-xs text-gray-500 mb-1">${f.label}</div>${f.code}</div>`; });
+            if(c.etapes) { htmlLecon += `<h3 class="font-bold text-xl text-blue-800 mb-2">Méthode</h3><ol class="list-decimal pl-5 space-y-2">`; c.etapes.forEach(e => htmlLecon += `<li>${e}</li>`); htmlLecon += `</ol>`; }
+            document.getElementById('lecon-body').innerHTML = htmlLecon;
+            
+            const r = json.revisions || {}; 
+            document.getElementById('revisions-list').innerHTML = (r.idees_essentielles || []).map(i => `<li>${i}</li>`).join('');
+            document.getElementById('vocab-grid').innerHTML = (r.mots_cles || []).map(m => `<div class="bg-white p-3 rounded-lg border border-gray-200 shadow-sm"><span class="font-bold text-blue-600 block">${m.terme}</span><span class="text-sm text-gray-600">${m.definition}</span></div>`).join('');
+            
+            const exList = document.getElementById('exercices-list'); exList.innerHTML = ''; 
+            (c.exercices || []).forEach((ex, idx) => { exList.innerHTML += `<div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm"><div class="flex justify-between items-start mb-2"><span class="bg-slate-100 text-slate-600 text-xs font-bold px-2 py-1 rounded uppercase">Exercice ${idx+1}</span></div><p class="font-bold text-lg mb-2">${ex.enonce}</p><p class="text-slate-500 italic mb-4 text-sm">${ex.question}</p><button onclick="document.getElementById('sol-${idx}').classList.toggle('hidden')" class="text-blue-600 text-sm font-bold hover:underline mb-2">Voir la solution</button><div id="sol-${idx}" class="hidden bg-green-50 p-4 rounded-lg border border-green-100 text-green-800 font-medium text-sm mt-2">${ex.solution}</div></div>`; });
+            
+            const qContainer = document.getElementById('quiz-container'); qContainer.innerHTML = ''; 
+            (json.quiz && json.quiz.questions ? json.quiz.questions : []).forEach((q, qIdx) => { 
+                let choicesHtml = q.choix.map((choix, cIdx) => `<div onclick="checkQuizAnswer(${qIdx}, ${cIdx}, this)" class="quiz-option cursor-pointer p-4 bg-white rounded-xl border border-indigo-100 hover:bg-indigo-50 transition mb-2">${choix}</div>`).join(''); 
+                qContainer.innerHTML += `<div class="mb-8 p-4 bg-white/10 rounded-xl border border-white/10"><p class="font-bold text-lg mb-4 text-white">Question ${qIdx+1}: ${q.question}</p><div class="text-slate-800">${choicesHtml}</div><div id="feedback-${qIdx}" class="hidden mt-2 p-3 rounded font-bold text-center"></div></div>`; 
+            });
+        }
+
+        function renderLessonSimple(htmlContent) { document.getElementById('lecon-body').innerHTML = htmlContent; document.getElementById('revisions-list').innerHTML = "<li>Contenu non structuré.</li>"; document.getElementById('vocab-grid').innerHTML = ""; document.getElementById('exercices-list').innerHTML = "<p>Pas d'exercices.</p>"; document.getElementById('quiz-container').innerHTML = "<p>Pas de quiz.</p>"; }
+
+        // Génération PDF
+        window.generatePDF = function() { 
+            if(!window.currentLessonData || !window.currentLessonData.contenu) return alert("Données insuffisantes."); 
+            const doc = new jsPDF(); const c = window.currentLessonData.contenu; 
+            doc.setFontSize(20); doc.setTextColor(37, 99, 235); doc.text(c.titre || "Fiche", 20, 20); 
+            doc.setFontSize(12); doc.setTextColor(100); doc.text(`Matière: ${window.currentLessonData.meta ? window.currentLessonData.meta.matiere : 'Cours'}`, 20, 30); 
+            let y = 50; 
+            (c.exercices || []).forEach((ex, i) => { 
+                if(y>270){doc.addPage();y=20;} 
+                doc.setFontSize(14); doc.setTextColor(0); doc.text(`Ex ${i+1}`,20,y); y+=7; 
+                const splitEnonce = doc.splitTextToSize(ex.enonce, 170); doc.setFontSize(12); doc.text(splitEnonce, 20, y); y += (splitEnonce.length * 5) + 15; 
+            }); 
+            doc.save(`fiche_${c.titre}.pdf`); 
+        }
+
+        // Chatbot
+        window.sendMessage = async function() { 
+            const input = document.getElementById('chat-input'); const msg = input.value; if (!msg) return; 
+            const box = document.getElementById('chatbox'); box.innerHTML += `<div class="text-right mb-4"><span class="bg-blue-600 text-white px-4 py-2 rounded-xl text-sm">${msg}</span></div>`; 
+            input.value = ''; box.scrollTop = box.scrollHeight; 
+            try { 
+                const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" }); 
+                const context = `Tu es prof. Cours: ${document.getElementById('lesson-title').innerText}.`; 
+                const result = await model.generateContent([context + " Question: " + msg]); 
+                box.innerHTML += `<div class="text-left mb-4"><span class="bg-white border border-gray-200 px-4 py-2 rounded-xl text-sm">${marked.parse(result.response.text())}</span></div>`; 
+                box.scrollTop = box.scrollHeight; 
+            } catch(e){ console.error(e); } 
+        }
     </script>
 </body>
 </html>
