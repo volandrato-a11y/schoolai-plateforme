@@ -271,6 +271,32 @@
         window.loadMatieres=function(){ const niv = document.getElementById('select-niveau').value; const cls = document.getElementById('select-classe').value; const select = document.getElementById('select-matiere'); const matieres = [...new Set(existingData.filter(d => d.niveau === niv && d.classe === cls).map(d => d.matiere))]; select.innerHTML = '<option value="">-- Choisir --</option>'; matieres.forEach(m => select.innerHTML += `<option value="${m}">${m}</option>`); }
         window.cancelEditMode=function(){ isNewMode = false; document.getElementById('edit-mode-id').value = ''; document.getElementById('rawTitle').value = ''; document.getElementById('rawText').value = ''; toggleSource('file'); document.getElementById('form-title').innerText = "2. Contenu du Cours"; document.getElementById('btn-cancel-edit-mode').classList.add('hidden'); document.getElementById('check-publie').checked = false; }
         window.toggleNewForm=function(){ isNewMode = !isNewMode; document.getElementById('new-form').classList.toggle('hidden', !isNewMode); document.getElementById('select-niveau').disabled = isNewMode; }
+        // --- FONCTIONS MANQUANTES (À AJOUTER) ---
+        window.handleFileSelect = function() {
+            const input = document.getElementById('fileInput');
+            if (input.files && input.files[0]) {
+                const f = input.files[0];
+                const nameDisplay = document.getElementById('file-name');
+                nameDisplay.innerText = "📄 " + f.name;
+                nameDisplay.classList.remove('hidden');
+                
+                // Active le bouton
+                const btn = document.getElementById('btn-action');
+                btn.disabled = false;
+                btn.className = "w-full bg-green-600 text-white font-bold py-4 rounded-xl shadow-lg transition transform hover:scale-[1.01] cursor-pointer";
+                btn.innerText = "Lancer le traitement IA";
+            }
+        }
+
+        window.disableButton = function() {
+            const btn = document.getElementById('btn-action');
+            btn.disabled = true;
+            btn.className = "w-full bg-gray-400 text-white font-bold text-lg py-4 rounded-xl shadow-lg cursor-not-allowed";
+            btn.innerText = "En attente de fichier...";
+            document.getElementById('file-name').classList.add('hidden');
+            document.getElementById('fileInput').value = ""; // Reset
+        }
     </script>
 </body>
 </html>
+
